@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trivia Hero</title>
+
+  <!-- React 18 + ReactDOM + Babel (for JSX in-browser) -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Lucide icons (UMD) -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(to bottom right, #7e22ce, #2563eb, #312e81);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const { createIcons, icons } = lucide;
+const Trophy = (props) => <i data-lucide="trophy" {...props}></i>;
+const Star = (props) => <i data-lucide="star" {...props}></i>;
+const Circle = (props) => <i data-lucide="circle" {...props}></i>;
+const Volume2 = (props) => <i data-lucide="volume-2" {...props}></i>;
+const Play = (props) => <i data-lucide="play" {...props}></i>;
+const Clock = (props) => <i data-lucide="clock" {...props}></i>;
+const Award = (props) => <i data-lucide="award" {...props}></i>;
+const Home = (props) => <i data-lucide="home" {...props}></i>;
+const Pause = (props) => <i data-lucide="pause" {...props}></i>;
+useEffect(() => createIcons(), []);
+
+    const QUESTIONS = [
+      { q: "What is the capital of France?", a: ["Paris", "Berlin", "Madrid", "Rome"], correct: 0, answer: "Paris" },
+      { q: "Who painted the Mona Lisa?", a: ["Michelangelo", "Raphael", "Leonardo da Vinci", "Donatello"], correct: 2, answer: "Leonardo da Vinci" },
+      { q: "How many planets are in our solar system?", a: ["7", "9", "10", "8"], correct: 3, answer: "8" },
+      { q: "Which is the largest ocean on Earth?", a: ["Atlantic", "Indian", "Arctic", "Pacific"], correct: 3, answer: "Pacific" },
+      { q: "Who wrote Romeo and Juliet?", a: ["Charles Dickens", "William Shakespeare", "Mark Twain", "Jane Austen"], correct: 1, answer: "William Shakespeare" },
+
+      { q: "What is 2 + 2?", a: ["3", "5", "4", "6"], correct: 2, answer: "4" },
+      { q: "Which country is home to the kangaroo?", a: ["New Zealand", "Australia", "South Africa", "Brazil"], correct: 1, answer: "Australia" },
+      { q: "How many continents are there?", a: ["5", "6", "7", "8"], correct: 2, answer: "7" },
+      { q: "What is the largest mammal?", a: ["Blue Whale", "African Elephant", "Giraffe", "Polar Bear"], correct: 0, answer: "Blue Whale" },
+      { q: "In what year did World War II end?", a: ["1943", "1944", "1946", "1945"], correct: 3, answer: "1945" },
+
+      { q: "What is the chemical symbol for gold?", a: ["Go", "Au", "Gd", "Ag"], correct: 1, answer: "Au" },
+      { q: "How many sides does a hexagon have?", a: ["5", "7", "6", "8"], correct: 2, answer: "6" },
+      { q: "Which planet is known as the Red Planet?", a: ["Venus", "Jupiter", "Mercury", "Mars"], correct: 3, answer: "Mars" },
+      { q: "Who was the first President of the United States?", a: ["George Washington", "Thomas Jefferson", "John Adams", "Benjamin Franklin"], correct: 0, answer: "George Washington" },
+      { q: "What is the smallest country in the world?", a: ["Monaco", "Vatican City", "San Marino", "Liechtenstein"], correct: 1, answer: "Vatican City" },
+
+      { q: "How many bones are in an adult human body?", a: ["196", "186", "206", "216"], correct: 2, answer: "206" },
+      { q: "What is the capital of Japan?", a: ["Seoul", "Beijing", "Bangkok", "Tokyo"], correct: 3, answer: "Tokyo" },
+      { q: "Who directed the movie Jaws?", a: ["Steven Spielberg", "George Lucas", "Martin Scorsese", "Francis Ford Coppola"], correct: 0, answer: "Steven Spielberg" },
+      { q: "Which band sang Bohemian Rhapsody?", a: ["The Beatles", "Queen", "Led Zeppelin", "Pink Floyd"], correct: 1, answer: "Queen" },
+      { q: "What is the speed of light?", a: ["150000 km/s", "450000 km/s", "300000 km/s", "200000 km/s"], correct: 2, answer: "300000 km/s" },
+
+      { q: "How many legs does a spider have?", a: ["6", "10", "12", "8"], correct: 3, answer: "8" },
+      { q: "What is the largest organ in the human body?", a: ["Skin", "Heart", "Brain", "Liver"], correct: 0, answer: "Skin" },
+      { q: "Who was the first person to walk on the moon?", a: ["Buzz Aldrin", "Neil Armstrong", "Yuri Gagarin", "John Glenn"], correct: 1, answer: "Neil Armstrong" },
+      { q: "What is the freezing point of water in Celsius?", a: ["-10", "10", "0", "32"], correct: 2, answer: "0" },
+      { q: "Which country won the FIFA World Cup in 2018?", a: ["Germany", "Brazil", "Argentina", "France"], correct: 3, answer: "France" },
+
+      { q: "What is the hardest natural substance on Earth?", a: ["Diamond", "Steel", "Titanium", "Granite"], correct: 0, answer: "Diamond" },
+      { q: "How many strings does a standard guitar have?", a: ["4", "6", "5", "7"], correct: 1, answer: "6" },
+      { q: "What gas do plants produce during photosynthesis?", a: ["Carbon dioxide", "Nitrogen", "Oxygen", "Hydrogen"], correct: 2, answer: "Oxygen" },
+      { q: "Which desert is the largest hot desert?", a: ["Arabian", "Gobi", "Kalahari", "Sahara"], correct: 3, answer: "Sahara" },
+      { q: "Who wrote Pride and Prejudice?", a: ["Jane Austen", "Charlotte Brontë", "Emily Brontë", "Virginia Woolf"], correct: 0, answer: "Jane Austen" },
+
+      { q: "What is the boiling point of water in Celsius?", a: ["90", "100", "95", "105"], correct: 1, answer: "100" },
+      { q: "How many players are on a soccer team?", a: ["9", "10", "11", "12"], correct: 2, answer: "11" },
+      { q: "What is the largest planet in our solar system?", a: ["Saturn", "Neptune", "Uranus", "Jupiter"], correct: 3, answer: "Jupiter" },
+      { q: "Who discovered penicillin?", a: ["Alexander Fleming", "Louis Pasteur", "Marie Curie", "Jonas Salk"], correct: 0, answer: "Alexander Fleming" },
+      { q: "How many Grand Slam tournaments are in tennis?", a: ["3", "4", "5", "6"], correct: 1, answer: "4" },
+
+      { q: "What is the smallest prime number?", a: ["0", "1", "2", "3"], correct: 2, answer: "2" },
+      { q: "Which country has won the most Olympic gold medals?", a: ["China", "Russia", "Germany", "United States"], correct: 3, answer: "United States" },
+      { q: "What is the powerhouse of the cell?", a: ["Mitochondria", "Nucleus", "Ribosome", "Chloroplast"], correct: 0, answer: "Mitochondria" },
+      { q: "In which year did the Titanic sink?", a: ["1910", "1912", "1914", "1916"], correct: 1, answer: "1912" },
+      { q: "How many colors are in a rainbow?", a: ["5", "6", "7", "8"], correct: 2, answer: "7" },
+
+      { q: "Which empire built Machu Picchu?", a: ["Aztec", "Maya", "Olmec", "Inca"], correct: 3, answer: "Inca" },
+      { q: "What color are emeralds?", a: ["Green", "Blue", "Red", "Yellow"], correct: 0, answer: "Green" },
+      { q: "Who is the author of the Harry Potter series?", a: ["J.R.R. Tolkien", "J.K. Rowling", "C.S. Lewis", "Roald Dahl"], correct: 1, answer: "J.K. Rowling" },
+      { q: "Which gas makes up most of Earth’s atmosphere?", a: ["Oxygen", "Carbon dioxide", "Nitrogen", "Argon"], correct: 2, answer: "Nitrogen" },
+      { q: "What is the capital of Canada?", a: ["Toronto", "Vancouver", "Montreal", "Ottawa"], correct: 3, answer: "Ottawa" },
+
+      { q: "How many minutes are in an hour?", a: ["60", "50", "55", "65"], correct: 0, answer: "60" },
+      { q: "Which ancient wonder is still standing today?", a: ["Hanging Gardens", "Great Pyramid of Giza", "Colossus of Rhodes", "Lighthouse of Alexandria"], correct: 1, answer: "Great Pyramid of Giza" },
+      { q: "What instrument does Sherlock Holmes play?", a: ["Piano", "Cello", "Violin", "Flute"], correct: 2, answer: "Violin" },
+      { q: "How many days are in a leap year?", a: ["364", "365", "367", "366"], correct: 3, answer: "366" },
+      { q: "What is the main ingredient in bread?", a: ["Flour", "Sugar", "Salt", "Yeast"], correct: 0, answer: "Flour" },
+
+      { q: "Who composed the music for Star Wars?", a: ["Hans Zimmer", "John Williams", "Ennio Morricone", "Howard Shore"], correct: 1, answer: "John Williams" },
+      { q: "How many chromosomes do humans have?", a: ["42", "44", "46", "48"], correct: 2, answer: "46" },
+      { q: "What is the currency of Japan?", a: ["Yuan", "Won", "Ringgit", "Yen"], correct: 3, answer: "Yen" },
+      { q: "Which organ pumps blood throughout the body?", a: ["Heart", "Liver", "Brain", "Lungs"], correct: 0, answer: "Heart" },
+      { q: "Who painted the ceiling of the Sistine Chapel?", a: ["Leonardo da Vinci", "Michelangelo", "Raphael", "Donatello"], correct: 1, answer: "Michelangelo" },
+
+      { q: "What is the longest river in the world?", a: ["Amazon", "Nile", "Yangtze", "Mississippi"], correct: 1, answer: "Nile" },
+      { q: "How many players are on a basketball team on the court?", a: ["4", "6", "5", "7"], correct: 2, answer: "5" },
+      { q: "Which continent is the largest by land area?", a: ["Africa", "North America", "Europe", "Asia"], correct: 3, answer: "Asia" },
+      { q: "What is the largest organ inside the human body?", a: ["Liver", "Heart", "Brain", "Stomach"], correct: 0, answer: "Liver" },
+      { q: "Which book begins with Call me Ishmael?", a: ["Treasure Island", "Moby Dick", "Robinson Crusoe", "The Old Man and the Sea"], correct: 1, answer: "Moby Dick" },
+
+      { q: "How many points is a touchdown worth in American football?", a: ["5", "7", "6", "8"], correct: 2, answer: "6" },
+      { q: "What is the smallest ocean?", a: ["Atlantic", "Indian", "Southern", "Arctic"], correct: 3, answer: "Arctic" },
+      { q: "Who wrote 1984?", a: ["George Orwell", "Aldous Huxley", "Ray Bradbury", "Kurt Vonnegut"], correct: 0, answer: "George Orwell" },
+      { q: "What year was the first Harry Potter book published?", a: ["1995", "1997", "1999", "2001"], correct: 1, answer: "1997" },
+      { q: "Which sport uses a puck?", a: ["Field hockey", "Lacrosse", "Ice hockey", "Polo"], correct: 2, answer: "Ice hockey" },
+
+      { q: "Mount Everest is located in which mountain range?", a: ["Andes", "Rockies", "Alps", "Himalayas"], correct: 3, answer: "Himalayas" },
+      { q: "How many teeth does an adult human have?", a: ["32", "28", "30", "34"], correct: 0, answer: "32" },
+      { q: "Which movie won Best Picture at the 2020 Oscars?", a: ["1917", "Parasite", "Joker", "Once Upon a Time"], correct: 1, answer: "Parasite" },
+      { q: "What is the smallest unit of life?", a: ["Atom", "Molecule", "Cell", "Tissue"], correct: 2, answer: "Cell" },
+      { q: "What is the capital of Italy?", a: ["Milan", "Venice", "Florence", "Rome"], correct: 3, answer: "Rome" },
+
+      { q: "How many hours are in a day?", a: ["24", "20", "22", "26"], correct: 0, answer: "24" },
+      { q: "Who played Iron Man in the Marvel movies?", a: ["Chris Evans", "Robert Downey Jr.", "Chris Hemsworth", "Mark Ruffalo"], correct: 1, answer: "Robert Downey Jr." },
+      { q: "What is the freezing point of water in Fahrenheit?", a: ["0", "32", "-32", "16"], correct: 1, answer: "32" },
+      { q: "Which sport is Wimbledon famous for?", a: ["Cricket", "Golf", "Tennis", "Rugby"], correct: 2, answer: "Tennis" },
+      { q: "The Great Barrier Reef is off the coast of which country?", a: ["Indonesia", "Philippines", "Thailand", "Australia"], correct: 3, answer: "Australia" },
+
+      { q: "How many zeros are in one million?", a: ["6", "4", "5", "7"], correct: 0, answer: "6" },
+      { q: "What is the name of the fictional city where Batman lives?", a: ["Star City", "Gotham City", "Metropolis", "Central City"], correct: 1, answer: "Gotham City" },
+      { q: "In golf what is a score of one under par called?", a: ["Eagle", "Bogey", "Birdie", "Albatross"], correct: 2, answer: "Birdie" },
+      { q: "How many degrees are in a right angle?", a: ["45", "60", "180", "90"], correct: 3, answer: "90" },
+      { q: "What is the largest bird in the world?", a: ["Ostrich", "Albatross", "Emu", "Condor"], correct: 0, answer: "Ostrich" },
+
+      { q: "Who sang Thriller?", a: ["Prince", "Michael Jackson", "Whitney Houston", "Stevie Wonder"], correct: 1, answer: "Michael Jackson" },
+      { q: "What is the maximum score in a single frame of bowling?", a: ["20", "25", "30", "35"], correct: 2, answer: "30" },
+      { q: "The French Revolution began in which year?", a: ["1776", "1793", "1789", "1801"], correct: 2, answer: "1789" },
+      { q: "How many seconds are in a minute?", a: ["50", "55", "65", "60"], correct: 3, answer: "60" },
+      { q: "What is the highest-grossing film of all time?", a: ["Avatar", "Titanic", "Avengers Endgame", "Star Wars"], correct: 0, answer: "Avatar" },
+
+      { q: "In which country did the Olympics originate?", a: ["Italy", "Greece", "Turkey", "Egypt"], correct: 1, answer: "Greece" },
+      { q: "Which TV show features Walter White?", a: ["The Sopranos", "Better Call Saul", "Breaking Bad", "Ozark"], correct: 2, answer: "Breaking Bad" },
+      { q: "What is the largest desert in the world?", a: ["Sahara", "Arabian", "Gobi", "Antarctica"], correct: 3, answer: "Antarctica" },
+      { q: "How many pennies are in a dollar?", a: ["100", "50", "75", "125"], correct: 0, answer: "100" },
+      { q: "What year did the first episode of Friends air?", a: ["1992", "1994", "1996", "1998"], correct: 1, answer: "1994" },
+
+      { q: "Who wrote The Great Gatsby?", a: ["Ernest Hemingway", "John Steinbeck", "F. Scott Fitzgerald", "William Faulkner"], correct: 2, answer: "F. Scott Fitzgerald" },
+      { q: "What is the diameter of a basketball hoop in inches?", a: ["16", "20", "22", "18"], correct: 3, answer: "18" },
+      { q: "What color is the center of an archery target?", a: ["Yellow", "Red", "Blue", "Black"], correct: 0, answer: "Yellow" },
+      { q: "Which actor played Jack in Titanic?", a: ["Brad Pitt", "Leonardo DiCaprio", "Tom Cruise", "Matt Damon"], correct: 1, answer: "Leonardo DiCaprio" },
+      { q: "How many innings are in a standard baseball game?", a: ["7", "8", "9", "10"], correct: 2, answer: "9" },
+
+      { q: "What sport is known as the beautiful game?", a: ["Basketball", "Tennis", "Cricket", "Soccer"], correct: 3, answer: "Soccer" },
+      { q: "What is the name of Simbas father in The Lion King?", a: ["Mufasa", "Scar", "Zazu", "Rafiki"], correct: 0, answer: "Mufasa" },
+      { q: "Which singer is known as the Queen of Pop?", a: ["Beyoncé", "Madonna", "Lady Gaga", "Whitney Houston"], correct: 1, answer: "Madonna" },
+      { q: "What is the name of the wizard in Lord of the Rings?", a: ["Merlin", "Dumbledore", "Gandalf", "Saruman"], correct: 2, answer: "Gandalf" },
+      { q: "In which novel does Atticus Finch appear?", a: ["The Grapes of Wrath", "Of Mice and Men", "The Great Gatsby", "To Kill a Mockingbird"], correct: 3, answer: "To Kill a Mockingbird" },
+
+      { q: "The Roman Empire fell in which year?", a: ["476 AD", "410 AD", "500 AD", "455 AD"], correct: 0, answer: "476 AD" }
+    ];
+
+    // ===== Utility: similarity for typed answers =====
+    const levenshteinDistance = (str1, str2) => {
+      const s1 = str1.toLowerCase();
+      const s2 = str2.toLowerCase();
+      const matrix = Array.from({ length: s2.length + 1 }, (_, i) => [i]);
+      for (let j = 0; j <= s1.length; j++) matrix[0][j] = j;
+      for (let i = 1; i <= s2.length; i++) {
+        for (let j = 1; j <= s1.length; j++) {
+          if (s2[i - 1] === s1[j - 1]) matrix[i][j] = matrix[i - 1][j - 1];
+          else matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+        }
+      }
+      return matrix[s2.length][s1.length];
+    };
+
+    const calculateSimilarity = (str1, str2) => {
+      const s1 = (str1 || "").toLowerCase().trim();
+      const s2 = (str2 || "").toLowerCase().trim();
+      if (s1.length < 2) return 0;
+      if (s1 === s2) return 1.0;
+      if (s2.length <= 3 && s1 !== s2) return 0;
+      if (s1.length >= s2.length * 0.6) {
+        if (s1.includes(s2) || s2.includes(s1)) return 0.9;
+      }
+      const longer = s1.length > s2.length ? s1 : s2;
+      const shorter = s1.length > s2.length ? s2 : s1;
+      if (longer.length === 0) return 1.0;
+      if (shorter.length < longer.length * 0.4) return 0;
+      const editDistance = levenshteinDistance(longer, shorter);
+      return (longer.length - editDistance) / longer.length;
+    };
+
+    const checkTextAnswer = (userAnswer, correctAnswer) => calculateSimilarity(userAnswer, correctAnswer) >= 0.8;
+
+    // ===== Component =====
+    function TriviaHero() {
+      const [gameState, setGameState] = useState("start");
+      const [gameMode, setGameMode] = useState("classic"); // 'classic' | 'expert'
+      const [currentQuestion, setCurrentQuestion] = useState(0);
+      const [score, setScore] = useState(0);
+      const [streak, setStreak] = useState(0);
+      const [selectedAnswer, setSelectedAnswer] = useState(null);
+      const [showResult, setShowResult] = useState(false);
+      const [isSpeaking, setIsSpeaking] = useState(false);
+      const [timeLeft, setTimeLeft] = useState(60);
+      const [questionsAnswered, setQuestionsAnswered] = useState(0);
+      const [shuffledQuestions, setShuffledQuestions] = useState([]);
+      const [leaderboard, setLeaderboard] = useState([]);
+      const [playerName, setPlayerName] = useState("");
+      const [showNameInput, setShowNameInput] = useState(false);
+      const [textAnswer, setTextAnswer] = useState("");
+      const [isPaused, setIsPaused] = useState(false);
+      const [usedQuestions, setUsedQuestions] = useState([]);
+
+      // Voice
+      const speakText = (text) => {
+        if ("speechSynthesis" in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.rate = 0.95;
+          utterance.pitch = 1.1;
+          utterance.volume = 1;
+          const voices = window.speechSynthesis.getVoices();
+          // Try to pick a female English voice if available
+          const preferred = voices.find(v =>
+            /female/i.test(v.name) ||
+            /Samantha|Victoria|Karen|Susan|Zira|Google UK English Female/i.test(v.name)
+          ) || voices.find(v => v.lang && v.lang.startsWith("en"));
+          if (preferred) utterance.voice = preferred;
+          utterance.onstart = () => setIsSpeaking(true);
+          utterance.onend = () => setIsSpeaking(false);
+          window.speechSynthesis.speak(utterance);
+        }
+      };
+
+      const shuffleArray = (array) => {
+        const newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
+      };
+
+      const startGame = () => {
+        const shuffled = shuffleArray(QUESTIONS);
+        setShuffledQuestions(shuffled);
+        setUsedQuestions([]);
+        setCurrentQuestion(0);
+        setScore(0);
+        setStreak(0);
+        setSelectedAnswer(null);
+        setShowResult(false);
+        setTimeLeft(gameMode === "expert" ? 90 : 60);
+        setQuestionsAnswered(0);
+        setTextAnswer("");
+        setGameState("playing");
+      };
+
+      // Preload voices
+      useEffect(() => {
+        if ("speechSynthesis" in window) {
+          const loadVoices = () => window.speechSynthesis.getVoices();
+          loadVoices();
+          window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+      }, []);
+
+      // Global timer
+      useEffect(() => {
+        if (gameState === "playing" && timeLeft > 0 && !isPaused) {
+          const timer = setInterval(() => {
+            setTimeLeft(prev => {
+              if (prev <= 1) {
+                clearInterval(timer);
+                window.speechSynthesis.cancel();
+                speakText("Time's up! Game over. Your final score is " + score);
+                setGameState("results");
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+          return () => clearInterval(timer);
+        }
+      }, [gameState, timeLeft, score, isPaused]);
+
+      // Speak current question automatically
+      useEffect(() => {
+        if (gameState === "playing" && !showResult && shuffledQuestions.length > 0 && !isPaused) {
+          const timer = setTimeout(() => speakText(shuffledQuestions[currentQuestion].q), 500);
+          return () => clearTimeout(timer);
+        }
+      }, [gameState, currentQuestion, showResult, shuffledQuestions, isPaused]);
+
+      const nextQuestion = () => {
+        const currentQ = shuffledQuestions[currentQuestion];
+        const newUsed = [...usedQuestions, currentQ];
+        setUsedQuestions(newUsed);
+
+        if (currentQuestion < shuffledQuestions.length - 1) {
+          setCurrentQuestion(currentQuestion + 1);
+        } else {
+          // If we've seen all, reshuffle remaining (never repeat until exhausted)
+          if (newUsed.length >= QUESTIONS.length) {
+            const reshuffled = shuffleArray(QUESTIONS);
+            setShuffledQuestions(reshuffled);
+            setUsedQuestions([]);
+            setCurrentQuestion(0);
+          } else {
+            const remaining = QUESTIONS.filter(q => !newUsed.some(used => used.q === q.q));
+            const reshuffled = shuffleArray(remaining);
+            setShuffledQuestions(reshuffled);
+            setCurrentQuestion(0);
+          }
+        }
+        setSelectedAnswer(null);
+        setShowResult(false);
+        setTextAnswer("");
+      };
+
+      const handleAnswer = (index) => {
+        if (showResult) return;
+        window.speechSynthesis.cancel();
+        setSelectedAnswer(index);
+        setShowResult(true);
+        setQuestionsAnswered(questionsAnswered + 1);
+
+        const isCorrect = index === shuffledQuestions[currentQuestion].correct;
+        if (isCorrect) {
+          const points = 100 + (streak * 50);
+          setScore(score + points);
+          setStreak(streak + 1);
+          speakText("Correct!");
+        } else {
+          setStreak(0);
+          speakText("Incorrect!");
+        }
+
+        setTimeout(nextQuestion, 1500);
+      };
+
+      const handleTextSubmit = (e) => {
+        if (e) e.preventDefault();
+        if (showResult || !textAnswer.trim()) return;
+
+        window.speechSynthesis.cancel();
+        setShowResult(true);
+        setQuestionsAnswered(questionsAnswered + 1);
+
+        const correctAnswer = shuffledQuestions[currentQuestion].a[shuffledQuestions[currentQuestion].correct];
+        const isCorrect = checkTextAnswer(textAnswer, correctAnswer);
+
+        if (isCorrect) {
+          const points = 150 + (streak * 75);
+          setScore(score + points);
+          setStreak(streak + 1);
+          speakText("Correct!");
+        } else {
+          setStreak(0);
+          speakText(`Incorrect! The answer was ${correctAnswer}`);
+        }
+
+        setTimeout(nextQuestion, 2500);
+      };
+
+      const resetGame = () => {
+        window.speechSynthesis.cancel();
+        setGameState("start");
+        setCurrentQuestion(0);
+        setScore(0);
+        setStreak(0);
+        setSelectedAnswer(null);
+        setShowResult(false);
+        setTimeLeft(60);
+        setQuestionsAnswered(0);
+        setShuffledQuestions([]);
+        setShowNameInput(false);
+        setPlayerName("");
+        setTextAnswer("");
+        setUsedQuestions([]);
+      };
+
+      const saveScore = () => {
+        if (playerName.trim()) {
+          const newEntry = {
+            name: playerName.trim(),
+            score: score,
+            questions: questionsAnswered,
+            correct: gameMode === "expert" ? Math.floor(score / 150) : Math.floor(score / 100),
+            date: new Date().toLocaleDateString(),
+            mode: gameMode
+          };
+          const updated = [...leaderboard, newEntry].sort((a, b) => b.score - a.score).slice(0, 10);
+          setLeaderboard(updated);
+          setShowNameInput(false);
+          speakText("Score saved! You're on the leaderboard!");
+        }
+      };
+
+      const togglePause = () => {
+        if (isPaused) setIsPaused(false);
+        else {
+          window.speechSynthesis.cancel();
+          setIsPaused(true);
+        }
+      };
+
+      const quitGame = () => {
+        window.speechSynthesis.cancel();
+        setIsPaused(false);
+        setGameState("start");
+        setCurrentQuestion(0);
+        setScore(0);
+        setStreak(0);
+        setSelectedAnswer(null);
+        setShowResult(false);
+        setTimeLeft(60);
+        setQuestionsAnswered(0);
+        setShuffledQuestions([]);
+        setTextAnswer("");
+        setUsedQuestions([]);
+      };
+
+      const repeatQuestion = () => {
+        if (shuffledQuestions.length > 0) speakText(shuffledQuestions[currentQuestion].q);
+      };
+
+      const getTimeColor = () => {
+        if (timeLeft > 30) return "text-green-600";
+        if (timeLeft > 10) return "text-yellow-600";
+        return "text-red-600";
+      };
+
+      // === SCREENS ===
+      if (gameState === "start") {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full text-center">
+              <div className="flex items-center justify-center mb-6">
+                <Trophy className="w-20 h-20 text-yellow-500" />
+              </div>
+              <h1 className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 mb-4">
+                Trivia Hero
+              </h1>
+              <p className="text-gray-600 text-xl mb-4">
+                Answer as many questions as you can!
+              </p>
+
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold text-gray-700 mb-4">Select Game Mode:</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    onClick={() => setGameMode("classic")}
+                    className={`p-6 rounded-xl border-4 transition transform hover:scale-105 ${
+                      gameMode === "classic"
+                        ? "border-purple-500 bg-purple-50 shadow-lg"
+                        : "border-gray-300 bg-white"
+                    }`}
+                  >
+                    <div className="text-4xl mb-2">🎯</div>
+                    <div className="font-bold text-lg text-gray-800">Classic</div>
+                    <div className="text-sm text-gray-600 mt-1">Multiple Choice</div>
+                    <div className="text-xs text-gray-500 mt-2">60 seconds</div>
+                  </button>
+
+                  <button
+                    onClick={() => setGameMode("expert")}
+                    className={`p-6 rounded-xl border-4 transition transform hover:scale-105 ${
+                      gameMode === "expert"
+                        ? "border-orange-500 bg-orange-50 shadow-lg"
+                        : "border-gray-300 bg-white"
+                    }`}
+                  >
+                    <div className="text-4xl mb-2">✍️</div>
+                    <div className="font-bold text-lg text-gray-800">Expert</div>
+                    <div className="text-sm text-gray-600 mt-1">Type Your Answer</div>
+                    <div className="text-xs text-gray-500 mt-2">90 seconds | 50% Bonus</div>
+                  </button>
+                </div>
+              </div>
+
+              <p className="text-gray-500 text-base mb-8">
+                100 questions with truly randomized answer positions!
+              </p>
+
+              <div className="space-y-4">
+                <button
+                  onClick={startGame}
+                  className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-bold text-2xl py-6 px-12 rounded-2xl transition transform hover:scale-105 shadow-2xl flex items-center justify-center gap-3"
+                >
+                  <Play className="w-8 h-8" />
+                  Start Game
+                </button>
+
+                {leaderboard.length > 0 && (
+                  <button
+                    onClick={() => setGameState("leaderboard")}
+                    className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold text-xl py-4 px-8 rounded-2xl transition transform hover:scale-105 shadow-xl flex items-center justify-center gap-3"
+                  >
+                    <Award className="w-7 h-7" />
+                    View Leaderboard
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (gameState === "playing" && shuffledQuestions.length > 0) {
+        const question = shuffledQuestions[currentQuestion];
+        const isCorrect =
+          gameMode === "classic"
+            ? selectedAnswer === question.correct
+            : showResult && checkTextAnswer(textAnswer, question.a[question.correct]);
+
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl w-full relative">
+              {isPaused && (
+                <div className="absolute inset-0 bg-black bg-opacity-75 rounded-3xl flex items-center justify-center z-50">
+                  <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 text-center">
+                    <Pause className="w-16 h-16 text-purple-600 mx-auto mb-4" />
+                    <h2 className="text-3xl font-bold text-gray-800 mb-6">Game Paused</h2>
+                    <div className="space-y-3">
+                      <button
+                        onClick={togglePause}
+                        className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-4 px-6 rounded-xl transition transform hover:scale-105 shadow-lg"
+                      >
+                        Resume Game
+                      </button>
+                      <button
+                        onClick={quitGame}
+                        className="w-full bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white font-bold py-4 px-6 rounded-xl transition transform hover:scale-105 shadow-lg flex items-center justify-center gap-2"
+                      >
+                        <Home className="w-5 h-5" />
+                        Quit to Main Menu
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Clock className={`w-6 h-6 ${getTimeColor()}`} />
+                    <span className={`text-3xl font-bold ${getTimeColor()}`}>{timeLeft}s</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={togglePause}
+                    className="p-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition"
+                    title="Pause"
+                  >
+                    <Pause className="w-6 h-6 text-gray-700" />
+                  </button>
+                  <div className="flex items-center gap-1">
+                    <Star className="w-5 h-5 text-yellow-500 fill-current" />
+                    <span className="font-bold text-gray-800">{score}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Circle className="w-5 h-5 text-orange-500 fill-current" />
+                    <span className="font-bold text-gray-800">{streak}x</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-center mb-4">
+                <span className="text-sm font-semibold text-gray-600">
+                  Question #{questionsAnswered + 1}
+                </span>
+              </div>
+
+              <div className="mb-8">
+                <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-6 mb-4 relative">
+                  <h2 className="text-2xl font-bold text-gray-800 text-center pr-12">
+                    {question.q}
+                  </h2>
+                  <button
+                    onClick={repeatQuestion}
+                    disabled={isSpeaking || showResult}
+                    className="absolute top-4 right-4 p-2 bg-white rounded-lg hover:bg-gray-100 transition disabled:opacity-50"
+                    title="Repeat question"
+                  >
+                    <Volume2 className={`w-6 h-6 text-purple-600 ${isSpeaking ? "animate-pulse" : ""}`} />
+                  </button>
+                </div>
+
+                {gameMode === "classic" ? (
+                  <div className="space-y-3">
+                    {question.a.map((answer, index) => {
+                      let bgColor = "bg-gray-100 hover:bg-gray-200";
+                      if (showResult) {
+                        if (index === question.correct) bgColor = "bg-green-500 text-white";
+                        else if (index === selectedAnswer) bgColor = "bg-red-500 text-white";
+                      }
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => handleAnswer(index)}
+                          disabled={showResult}
+                          className={`w-full ${bgColor} font-semibold py-4 px-6 rounded-xl transition transform hover:scale-105 shadow-md disabled:cursor-not-allowed disabled:transform-none text-left text-lg`}
+                        >
+                          {answer}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <form onSubmit={handleTextSubmit} className="space-y-4">
+                    <input
+                      type="text"
+                      value={textAnswer}
+                      onChange={(e) => setTextAnswer(e.target.value)}
+                      disabled={showResult}
+                      placeholder="Type your answer..."
+                      className="w-full px-6 py-4 text-lg border-4 border-purple-300 rounded-xl focus:border-purple-500 focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      autoFocus
+                    />
+                    <button
+                      type="submit"
+                      disabled={showResult || !textAnswer.trim()}
+                      className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-bold py-4 px-6 rounded-xl transition transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    >
+                      Submit Answer
+                    </button>
+                    {showResult && (
+                      <div className="bg-gray-100 rounded-xl p-4">
+                        <p className="text-sm text-gray-600">Correct Answer:</p>
+                        <p className="text-lg font-bold text-gray-800">{question.a[question.correct]}</p>
+                      </div>
+                    )}
+                  </form>
+                )}
+              </div>
+
+              {showResult && (
+                <div className="text-center">
+                  <div className={`text-2xl font-bold ${isCorrect ? "text-green-600" : "text-red-600"}`}>
+                    {isCorrect ? "✓ Correct!" : "✗ Incorrect"}
+                  </div>
+                  {isCorrect && streak > 0 && (
+                    <div className="text-lg text-orange-600 font-semibold mt-2">
+                      {streak}x Streak! +{gameMode === "expert" ? 150 + ((streak - 1) * 75) : 100 + ((streak - 1) * 50)} points
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      if (gameState === "results") {
+        const correctAnswers = gameMode === "expert"
+          ? Math.floor(score / 150)
+          : Math.floor(score / 100);
+        const accuracy = questionsAnswered > 0 ? Math.round((correctAnswers / questionsAnswered) * 100) : 0;
+        const isTopScore = leaderboard.length < 10 || score > leaderboard[leaderboard.length - 1]?.score || leaderboard.length === 0;
+
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl w-full text-center">
+              <Trophy className="w-24 h-24 text-yellow-500 mx-auto mb-4" />
+              <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 mb-4">
+                Times Up!
+              </h1>
+
+              <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-6 mb-6">
+                <div className="text-5xl font-bold text-gray-800 mb-2">{score}</div>
+                <div className="text-xl text-gray-600">Final Score</div>
+                <div className="text-sm text-purple-600 mt-2 font-semibold">
+                  {gameMode === "expert" ? "✍️ Expert Mode" : "🎯 Classic Mode"}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 mb-8">
+                <div className="bg-gray-100 rounded-xl p-4">
+                  <div className="text-3xl font-bold text-gray-800">{questionsAnswered}</div>
+                  <div className="text-sm text-gray-600">Questions</div>
+                </div>
+                <div className="bg-gray-100 rounded-xl p-4">
+                  <div className="text-3xl font-bold text-gray-800">{correctAnswers}</div>
+                  <div className="text-sm text-gray-600">Correct</div>
+                </div>
+                <div className="bg-gray-100 rounded-xl p-4">
+                  <div className="text-3xl font-bold text-gray-800">{accuracy}%</div>
+                  <div className="text-sm text-gray-600">Accuracy</div>
+                </div>
+              </div>
+
+              {!showNameInput && isTopScore && score > 0 && (
+                <div className="mb-6">
+                  <p className="text-lg font-semibold text-purple-600 mb-4">🎉 You made the leaderboard!</p>
+                  <button
+                    onClick={() => setShowNameInput(true)}
+                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold py-3 px-8 rounded-xl transition transform hover:scale-105 shadow-lg"
+                  >
+                    Save Your Score
+                  </button>
+                </div>
+              )}
+
+              {showNameInput && (
+                <div className="mb-6 bg-gray-50 rounded-xl p-6">
+                  <label className="block text-gray-700 font-semibold mb-2">Enter Your Name:</label>
+                  <input
+                    type="text"
+                    value={playerName}
+                    onChange={(e) => setPlayerName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && saveScore()}
+                    placeholder="Your name"
+                    maxLength={20}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none mb-4 text-center text-lg"
+                    autoFocus
+                  />
+                  <button
+                    onClick={saveScore}
+                    disabled={!playerName.trim()}
+                    className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold py-3 px-6 rounded-xl transition transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  >
+                    Save to Leaderboard
+                  </button>
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <button
+                  onClick={resetGame}
+                  className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold py-4 px-6 rounded-xl transition transform hover:scale-105 shadow-lg"
+                >
+                  Play Again
+                </button>
+                <button
+                  onClick={() => setGameState("start")}
+                  className="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-4 px-6 rounded-xl transition transform hover:scale-105 shadow-lg flex items-center justify-center gap-2"
+                >
+                  <Home className="w-5 h-5" />
+                  Back to Home
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (gameState === "leaderboard") {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl w-full">
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <Award className="w-12 h-12 text-yellow-500" />
+                <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">
+                  Leaderboard
+                </h1>
+              </div>
+
+              {leaderboard.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 text-xl mb-6">No scores yet. Be the first to play!</p>
+                  <button
+                    onClick={() => setGameState("start")}
+                    className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold py-3 px-8 rounded-xl transition transform hover:scale-105 shadow-lg"
+                  >
+                    Start Playing
+                  </button>
+                </div>
+              ) : (
+                <div className="bg-gray-50 rounded-xl p-6 mb-6">
+                  {leaderboard.map((entry, index) => (
+                    <div
+                      key={index}
+                      className={`flex items-center justify-between py-4 px-6 rounded-xl mb-3 shadow-md ${
+                        index === 0 ? "bg-gradient-to-r from-yellow-200 to-yellow-300" :
+                        index === 1 ? "bg-gradient-to-r from-gray-200 to-gray-300" :
+                        index === 2 ? "bg-gradient-to-r from-orange-200 to-orange-300" :
+                        "bg-white"
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="flex flex-col items-center">
+                          <span className="font-bold text-2xl text-gray-700">#{index + 1}</span>
+                          {index < 3 && <Trophy className="w-5 h-5 text-yellow-600 mt-1" />}
+                        </div>
+                        <div className="text-left">
+                          <div className="font-bold text-lg text-gray-800">{entry.name}</div>
+                          <div className="text-sm text-gray-600">{entry.date}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-2xl text-purple-600">{entry.score}</div>
+                        <div className="text-sm text-gray-600">
+                          {entry.correct}/{entry.questions} • {entry.mode === "expert" ? "✍️" : "🎯"}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button
+                onClick={() => setGameState("start")}
+                className="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-4 px-6 rounded-xl transition transform hover:scale-105 shadow-lg flex items-center justify-center gap-2"
+              >
+                <Home className="w-5 h-5" />
+                Back to Home
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      return null;
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<TriviaHero />);
+  </script>
+</body>
+</html>
