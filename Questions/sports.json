@@ -1,0 +1,17 @@
+[
+  { "q": "Which tennis Grand Slam is played on clay?", "a": ["French Open", "Wimbledon", "US Open", "Australian Open"], "answer": "French Open" },
+  { "q": "How many players are on the field for one soccer team?", "a": ["11", "10", "12", "9"], "answer": "11" },
+  { "q": "Michael Jordan played the majority of his NBA career with which team?", "a": ["Chicago Bulls", "Los Angeles Lakers", "Boston Celtics", "Detroit Pistons"], "answer": "Chicago Bulls" },
+  { "q": "How often are the Summer Olympics held?", "a": ["Every 4 years", "Every 2 years", "Every 3 years", "Every 5 years"], "answer": "Every 4 years" },
+  { "q": "In cricket, being dismissed without scoring is called a what?", "a": ["Duck", "Yorker", "Bouncer", "Maiden"], "answer": "Duck" },
+  { "q": "Which country hosted the 2016 Summer Olympics?", "a": ["Brazil", "China", "UK", "Japan"], "answer": "Brazil" },
+  { "q": "In rugby union, a try is worth how many points?", "a": ["5", "3", "7", "6"], "answer": "5" },
+  { "q": "Who holds the men's 100m world record (as of the 2010s and 2020s)?", "a": ["Usain Bolt", "Tyson Gay", "Yohan Blake", "Asafa Powell"], "answer": "Usain Bolt" },
+  { "q": "How many major championships are there in men's professional golf?", "a": ["4", "3", "5", "6"], "answer": "4" },
+  { "q": "A home run with the bases loaded is called a what in baseball?", "a": ["Grand slam", "Inside-the-park", "Walk-off", "Sacrifice"], "answer": "Grand slam" },
+  { "q": "What flag signals the end of a Formula 1 race?", "a": ["Checkered flag", "Red flag", "Yellow flag", "Green flag"], "answer": "Checkered flag" },
+  { "q": "The championship game of the NFL is called the what?", "a": ["Super Bowl", "World Series", "Stanley Cup Final", "NBA Finals"], "answer": "Super Bowl" },
+  { "q": "The pommel horse is used in which sport?", "a": ["Gymnastics", "Equestrian", "Fencing", "Wrestling"], "answer": "Gymnastics" },
+  { "q": "Sumo wrestling originated in which country?", "a": ["Japan", "China", "Korea", "Mongolia"], "answer": "Japan" },
+  { "q": "How many minutes are in regulation time for a standard soccer match?", "a": ["90", "80", "70", "100"], "answer": "90" }
+]
