@@ -15,7 +15,6 @@
 
   <style>
     html, body, #root { height: 100%; }
-    /* Prevent selection during gameplay for a cleaner feel */
     .no-select { user-select: none; -webkit-user-select: none; }
   </style>
 </head>
@@ -23,46 +22,11 @@
   <div id="root" class="h-full"></div>
 
   <script type="text/babel">
-    const { useState, useEffect, useRef, useMemo } = React;
+    const { useState, useEffect, useRef } = React;
 
-    /***********************
-     * SVG ICON COMPONENTS *
-     ***********************/
-    const TrophyIcon = ({ className = "w-8 h-8" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M6 2a1 1 0 0 0-1 1v2H3a1 1 0 0 0-1 1c0 3.314 2.686 6 6 6 .63 0 1.24-.095 1.816-.273A6.996 6.996 0 0 0 11 15.917V18H8a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2h-3v-2.083a6.996 6.996 0 0 0 1.184-4.19A6.974 6.974 0 0 0 16 12c3.314 0 6-2.686 6-6a1 1 0 0 0-1-1h-2V3a1 1 0 0 0-1-1H6Zm1 3h10v2a1 1 0 0 0 1 1h1.938A4.002 4.002 0 0 1 16 11c-2.152 0-3.999-1.648-4.2-3.783A1 1 0 0 0 10.807 6H7V5Zm-2 3a1 1 0 0 0 1-1V6H4.062A4.002 4.002 0 0 0 7 11c.346 0 .679-.044 1-.128V8Z"/>
-      </svg>
-    );
-
-    const StarIcon = ({ className = "w-6 h-6" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.787 1.402 8.168L12 18.896l-7.336 3.87 1.402-8.168L.132 9.211l8.2-1.193L12 .587z"/>
-      </svg>
-    );
-
-    const ClockIcon = ({ className = "w-5 h-5" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M12 1.75A10.25 10.25 0 1 0 22.25 12 10.262 10.262 0 0 0 12 1.75zm0 18.5A8.25 8.25 0 1 1 20.25 12 8.26 8.26 0 0 1 12 20.25z"/>
-        <path d="M12.75 7a.75.75 0 0 0-1.5 0v5a.75.75 0 0 0 .22.53l3.5 3.5a.75.75 0 1 0 1.06-1.06l-3.28-3.28V7z"/>
-      </svg>
-    );
-
-    const PauseIcon = ({ className = "w-5 h-5" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M6 4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H6zm10 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2z"/>
-      </svg>
-    );
-
-    const SpeakerIcon = ({ className = "w-5 h-5" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.25-3.9v7.8A4.5 4.5 0 0 0 16.5 12zM14.25 3.11v2.09a7.5 7.5 0 0 1 0 13.6v2.09c3.5-1.12 6-4.38 6-8.09s-2.5-6.97-6-8.09z"/>
-      </svg>
-    );
-
-    /********************
-     * HELPER FUNCTIONS *
-     ********************/
-    // Fisher-Yates shuffle
+    /*******************
+     * HELPERS
+     *******************/
     function shuffle(array) {
       const arr = array.slice();
       for (let i = arr.length - 1; i > 0; i--) {
@@ -72,7 +36,6 @@
       return arr;
     }
 
-    // Levenshtein distance and similarity (0..1)
     function levenshtein(a, b) {
       a = a.toLowerCase().trim();
       b = b.toLowerCase().trim();
@@ -98,18 +61,17 @@
       return 1 - dist / Math.max(a.length, b.length);
     }
 
-    // Web Speech API (female voice preference)
     function getFemaleVoice() {
       const synth = window.speechSynthesis;
       const voices = synth.getVoices();
       if (!voices || voices.length === 0) return null;
-      const preferred = ["Samantha", "Victoria", "Google UK English Female", "Google US English", "Microsoft Zira", "English (United States)", "English (Great Britain)"];
-      // Try names with "Female" or known female voices
-      let voice =
+      const preferred = ["Samantha", "Victoria", "Google UK English Female", "Google US English", "Microsoft Zira"];
+      return (
         voices.find(v => /female/i.test(v.name)) ||
         voices.find(v => preferred.some(p => v.name.includes(p))) ||
-        voices.find(v => /English/i.test(v.lang));
-      return voice || voices[0];
+        voices.find(v => /English/i.test(v.lang)) ||
+        voices[0]
+      );
     }
 
     function speak(text, voiceRef) {
@@ -118,143 +80,27 @@
       const utter = new SpeechSynthesisUtterance(text);
       const voice = voiceRef.current || getFemaleVoice();
       if (voice) utter.voice = voice;
-      utter.rate = 1;
-      utter.pitch = 1;
-      utter.volume = 1;
       window.speechSynthesis.speak(utter);
     }
-
     function stopSpeech() {
       if (window.speechSynthesis) window.speechSynthesis.cancel();
     }
 
-    /*****************
-     * QUESTION BANK *
-     * 100 total     *
-     *****************/
-    // IMPORTANT: For each question, 'a' initially lists the correct answer first (index 0).
-    // On game initialization we will RANDOMIZE the answer order per question and set 'correct' accordingly.
-    const QUESTIONS_RAW = [
-      /* --------- Geography (10) --------- */
-      {cat:"Geography", q:"What is the largest desert in the world?", a:["Antarctica","Sahara","Gobi","Arabian"], answer:"Antarctica"},
-      {cat:"Geography", q:"The Danube River flows into which sea?", a:["Black Sea","Mediterranean Sea","Red Sea","Caspian Sea"], answer:"Black Sea"},
-      {cat:"Geography", q:"Which country has the city of Marrakesh?", a:["Morocco","Egypt","Tunisia","Algeria"], answer:"Morocco"},
-      {cat:"Geography", q:"What is the capital city of New Zealand?", a:["Wellington","Auckland","Christchurch","Hamilton"], answer:"Wellington"},
-      {cat:"Geography", q:"Mount Kilimanjaro is located in which country?", a:["Tanzania","Kenya","Uganda","Ethiopia"], answer:"Tanzania"},
-      {cat:"Geography", q:"Which is the longest river in the world (by most measures)?", a:["Nile","Amazon","Yangtze","Mississippi"], answer:"Nile"},
-      {cat:"Geography", q:"Which country spans the most time zones (including territories)?", a:["France","USA","Russia","UK"], answer:"France"},
-      {cat:"Geography", q:"What is the largest island in the world?", a:["Greenland","New Guinea","Borneo","Madagascar"], answer:"Greenland"},
-      {cat:"Geography", q:"Which city famously spans two continents, Europe and Asia?", a:["Istanbul","Moscow","Athens","Ankara"], answer:"Istanbul"},
-      {cat:"Geography", q:"Lake Baikal is in which country?", a:["Russia","Mongolia","Kazakhstan","China"], answer:"Russia"},
+    /*******************
+     * LOAD QUESTIONS
+     *******************/
+    async function loadQuestions() {
+      const categories = ["geography","history","science","entertainment","sports","literature","general"];
+      let all = [];
+      for (let cat of categories) {
+        const res = await fetch(`Questions/${cat}.json`); // capital Q!
+        const data = await res.json();
+        all = all.concat(data);
+      }
+      return all;
+    }
 
-      /* --------- History (10) --------- */
-      {cat:"History", q:"In which year did World War II end?", a:["1945","1939","1942","1944"], answer:"1945"},
-      {cat:"History", q:"Who was the first woman to win a Nobel Prize?", a:["Marie Curie","Rosalind Franklin","Ada Lovelace","Lise Meitner"], answer:"Marie Curie"},
-      {cat:"History", q:"The Magna Carta was signed in which year?", a:["1215","1066","1492","1314"], answer:"1215"},
-      {cat:"History", q:"Who was assassinated on the Ides of March, 44 BCE?", a:["Julius Caesar","Mark Antony","Brutus","Cicero"], answer:"Julius Caesar"},
-      {cat:"History", q:"Who invented the movable-type printing press in Europe?", a:["Johannes Gutenberg","Leonardo da Vinci","Isaac Newton","Galileo Galilei"], answer:"Johannes Gutenberg"},
-      {cat:"History", q:"The United States declared independence in which year?", a:["1776","1789","1812","1754"], answer:"1776"},
-      {cat:"History", q:"The Great Wall of China was largely rebuilt during which dynasty?", a:["Ming","Han","Qing","Tang"], answer:"Ming"},
-      {cat:"History", q:"Who was the first human in space?", a:["Yuri Gagarin","Neil Armstrong","Alan Shepard","Valentina Tereshkova"], answer:"Yuri Gagarin"},
-      {cat:"History", q:"What was the name of the ship that carried the Pilgrims to America in 1620?", a:["Mayflower","Beagle","Santa Maria","Endeavour"], answer:"Mayflower"},
-      {cat:"History", q:"The Cold War was primarily between which two superpowers?", a:["USA and USSR","USA and China","UK and Germany","France and USSR"], answer:"USA and USSR"},
-
-      /* --------- Science (15) --------- */
-      {cat:"Science", q:"What is the chemical formula for water?", a:["H₂O","CO₂","O₂","H₂"], answer:"H₂O"},
-      {cat:"Science", q:"What is the most abundant gas in Earth's atmosphere?", a:["Nitrogen","Oxygen","Argon","Carbon dioxide"], answer:"Nitrogen"},
-      {cat:"Science", q:"What is the approximate speed of light in vacuum?", a:["300,000 km/s","150,000 km/s","3,000 km/s","30,000 km/s"], answer:"300,000 km/s"},
-      {cat:"Science", q:"Which organelle conducts photosynthesis?", a:["Chloroplast","Mitochondrion","Nucleus","Ribosome"], answer:"Chloroplast"},
-      {cat:"Science", q:"What is the heaviest naturally occurring element?", a:["Uranium","Plutonium","Lead","Osmium"], answer:"Uranium"},
-      {cat:"Science", q:"A solution with pH less than 7 is considered what?", a:["Acidic","Basic","Neutral","Alkaline"], answer:"Acidic"},
-      {cat:"Science", q:"Newton's third law states that every action has an equal and opposite what?", a:["Reaction","Force","Mass","Acceleration"], answer:"Reaction"},
-      {cat:"Science", q:"What is the electrical charge of a neutron?", a:["Neutral","Positive","Negative","Depends on isotope"], answer:"Neutral"},
-      {cat:"Science", q:"How many bones are in a typical adult human skeleton?", a:["206","201","212","196"], answer:"206"},
-      {cat:"Science", q:"What is the largest internal organ in the human body?", a:["Liver","Lungs","Heart","Kidney"], answer:"Liver"},
-      {cat:"Science", q:"Which planet has the most prominent ring system?", a:["Saturn","Jupiter","Uranus","Neptune"], answer:"Saturn"},
-      {cat:"Science", q:"DNA stands for what?", a:["Deoxyribonucleic acid","Deoxyribose nitrogen acid","Dinitrogen acid","Double nucleotide acid"], answer:"Deoxyribonucleic acid"},
-      {cat:"Science", q:"At sea level, water boils at what temperature (°C)?", a:["100","90","80","120"], answer:"100"},
-      {cat:"Science", q:"The SI unit of electric potential is the what?", a:["Volt","Ampere","Ohm","Watt"], answer:"Volt"},
-      {cat:"Science", q:"What force keeps planets in orbit around the Sun?", a:["Gravity","Magnetism","Friction","Centrifugal"], answer:"Gravity"},
-
-      /* --------- Entertainment (15) --------- */
-      {cat:"Entertainment", q:"Who directed the film 'Jurassic Park' (1993)?", a:["Steven Spielberg","James Cameron","George Lucas","Ridley Scott"], answer:"Steven Spielberg"},
-      {cat:"Entertainment", q:"'Bohemian Rhapsody' was performed by which band?", a:["Queen","The Beatles","Pink Floyd","Led Zeppelin"], answer:"Queen"},
-      {cat:"Entertainment", q:"Walter White is a character from which TV series?", a:["Breaking Bad","The Wire","Mad Men","The Sopranos"], answer:"Breaking Bad"},
-      {cat:"Entertainment", q:"Which film won the 1997 Best Picture Oscar?", a:["Titanic","L.A. Confidential","Good Will Hunting","As Good as It Gets"], answer:"Titanic"},
-      {cat:"Entertainment", q:"Which video game character is a plumber in a red hat?", a:["Mario","Sonic","Link","Master Chief"], answer:"Mario"},
-      {cat:"Entertainment", q:"Who wrote 'A Song of Ice and Fire'?", a:["George R.R. Martin","J.K. Rowling","Brandon Sanderson","Patrick Rothfuss"], answer:"George R.R. Martin"},
-      {cat:"Entertainment", q:"What was Disney's first full-length animated feature film?", a:["Snow White and the Seven Dwarfs","Pinocchio","Fantasia","Bambi"], answer:"Snow White and the Seven Dwarfs"},
-      {cat:"Entertainment", q:"Who played Hermione Granger in the Harry Potter films?", a:["Emma Watson","Emma Stone","Keira Knightley","Natalie Portman"], answer:"Emma Watson"},
-      {cat:"Entertainment", q:"In which movie is the quote 'I'll be back' famous?", a:["The Terminator","Predator","Robocop","Die Hard"], answer:"The Terminator"},
-      {cat:"Entertainment", q:"'Stranger Things' streams on which platform?", a:["Netflix","Amazon Prime Video","Hulu","Disney+"], answer:"Netflix"},
-      {cat:"Entertainment", q:"Who sings 'Shape of You'?", a:["Ed Sheeran","Justin Bieber","Adele","Taylor Swift"], answer:"Ed Sheeran"},
-      {cat:"Entertainment", q:"Which studio produces the Marvel Cinematic Universe?", a:["Marvel Studios","Warner Bros.","Paramount","Universal"], answer:"Marvel Studios"},
-      {cat:"Entertainment", q:"Which awards primarily honor achievements in recorded music in the U.S.?", a:["Grammy Awards","Emmy Awards","Tony Awards","Oscars"], answer:"Grammy Awards"},
-      {cat:"Entertainment", q:"What is the name of Pixar’s iconic desk lamp mascot?", a:["Luxo Jr.","Anglepoise","Lumi","Pix"], answer:"Luxo Jr."},
-      {cat:"Entertainment", q:"What is the signature weapon of the Jedi in Star Wars?", a:["Lightsaber","Blaster","Bowcaster","Vibroblade"], answer:"Lightsaber"},
-
-      /* --------- Sports (15) --------- */
-      {cat:"Sports", q:"Which tennis Grand Slam is played on clay?", a:["French Open","Wimbledon","US Open","Australian Open"], answer:"French Open"},
-      {cat:"Sports", q:"How many players are on the field for one soccer team?", a:["11","10","12","9"], answer:"11"},
-      {cat:"Sports", q:"Michael Jordan played the majority of his NBA career with which team?", a:["Chicago Bulls","Los Angeles Lakers","Boston Celtics","Detroit Pistons"], answer:"Chicago Bulls"},
-      {cat:"Sports", q:"How often are the Summer Olympics held?", a:["Every 4 years","Every 2 years","Every 3 years","Every 5 years"], answer:"Every 4 years"},
-      {cat:"Sports", q:"In cricket, being dismissed without scoring is called a what?", a:["Duck","Yorker","Bouncer","Maiden"], answer:"Duck"},
-      {cat:"Sports", q:"Which country hosted the 2016 Summer Olympics?", a:["Brazil","China","UK","Japan"], answer:"Brazil"},
-      {cat:"Sports", q:"In rugby union, a try is worth how many points?", a:["5","3","7","6"], answer:"5"},
-      {cat:"Sports", q:"Who holds the men's 100m world record (as of the 2010s and 2020s)?", a:["Usain Bolt","Tyson Gay","Yohan Blake","Asafa Powell"], answer:"Usain Bolt"},
-      {cat:"Sports", q:"How many major championships are there in men's professional golf?", a:["4","3","5","6"], answer:"4"},
-      {cat:"Sports", q:"A home run with the bases loaded is called a what in baseball?", a:["Grand slam","Inside-the-park","Walk-off","Sacrifice"], answer:"Grand slam"},
-      {cat:"Sports", q:"What flag signals the end of a Formula 1 race?", a:["Checkered flag","Red flag","Yellow flag","Green flag"], answer:"Checkered flag"},
-      {cat:"Sports", q:"The championship game of the NFL is called the what?", a:["Super Bowl","World Series","Stanley Cup Final","NBA Finals"], answer:"Super Bowl"},
-      {cat:"Sports", q:"The pommel horse is used in which sport?", a:["Gymnastics","Equestrian","Fencing","Wrestling"], answer:"Gymnastics"},
-      {cat:"Sports", q:"Sumo wrestling originated in which country?", a:["Japan","China","Korea","Mongolia"], answer:"Japan"},
-      {cat:"Sports", q:"How many minutes are in regulation time for a standard soccer match?", a:["90","80","70","100"], answer:"90"},
-
-      /* --------- Literature (10) --------- */
-      {cat:"Literature", q:"Who wrote '1984'?", a:["George Orwell","Aldous Huxley","Ray Bradbury","Philip K. Dick"], answer:"George Orwell"},
-      {cat:"Literature", q:"Who is the author of 'Pride and Prejudice'?", a:["Jane Austen","Charlotte Brontë","Emily Brontë","Mary Shelley"], answer:"Jane Austen"},
-      {cat:"Literature", q:"Who wrote 'The Hobbit'?", a:["J.R.R. Tolkien","C.S. Lewis","Terry Pratchett","Ursula K. Le Guin"], answer:"J.R.R. Tolkien"},
-      {cat:"Literature", q:"Who wrote 'To Kill a Mockingbird'?", a:["Harper Lee","Toni Morrison","John Steinbeck","Ernest Hemingway"], answer:"Harper Lee"},
-      {cat:"Literature", q:"Which Shakespeare play features the Prince of Denmark?", a:["Hamlet","Macbeth","Othello","King Lear"], answer:"Hamlet"},
-      {cat:"Literature", q:"What is the name of the captain in 'Moby-Dick'?", a:["Ahab","Ishmael","Starbuck","Queequeg"], answer:"Ahab"},
-      {cat:"Literature", q:"Who is the protagonist of 'The Catcher in the Rye'?", a:["Holden Caulfield","Jay Gatsby","Winston Smith","Gregor Samsa"], answer:"Holden Caulfield"},
-      {cat:"Literature", q:"Which epic is attributed to Homer, following Odysseus?", a:["The Odyssey","The Iliad","The Aeneid","Metamorphoses"], answer:"The Odyssey"},
-      {cat:"Literature", q:"What is the first book in the original Harry Potter series called?", a:["Philosopher's Stone","Chamber of Secrets","Goblet of Fire","Sorcerer's Stone"], answer:"Philosopher's Stone"},
-      {cat:"Literature", q:"Who wrote 'The Chronicles of Narnia'?", a:["C.S. Lewis","Roald Dahl","J.K. Rowling","Philip Pullman"], answer:"C.S. Lewis"},
-
-      /* --------- General Knowledge (25) --------- */
-      {cat:"General", q:"What is the capital of France?", a:["Paris","Rome","Madrid","Berlin"], answer:"Paris"},
-      {cat:"General", q:"Which metal is liquid at room temperature?", a:["Mercury","Gallium","Sodium","Aluminum"], answer:"Mercury"},
-      {cat:"General", q:"How many continents are there?", a:["7","5","6","8"], answer:"7"},
-      {cat:"General", q:"Which language has the most native speakers?", a:["Mandarin Chinese","English","Spanish","Hindi"], answer:"Mandarin Chinese"},
-      {cat:"General", q:"Which planet is known as the Red Planet?", a:["Mars","Venus","Jupiter","Mercury"], answer:"Mars"},
-      {cat:"General", q:"How many degrees are in a right angle?", a:["90","45","60","180"], answer:"90"},
-      {cat:"General", q:"Which instrument has keys, pedals, and strings?", a:["Piano","Harp","Violin","Flute"], answer:"Piano"},
-      {cat:"General", q:"What is the hardest natural substance?", a:["Diamond","Corundum","Quartz","Topaz"], answer:"Diamond"},
-      {cat:"General", q:"What currency is used in Japan?", a:["Yen","Won","Yuan","Ringgit"], answer:"Yen"},
-      {cat:"General", q:"Which animal is known as the 'Ship of the Desert'?", a:["Camel","Llama","Donkey","Horse"], answer:"Camel"},
-      {cat:"General", q:"Which ocean is the largest by area?", a:["Pacific","Atlantic","Indian","Arctic"], answer:"Pacific"},
-      {cat:"General", q:"How many hearts does an octopus have?", a:["3","1","2","4"], answer:"3"},
-      {cat:"General", q:"Which vitamin is produced when skin is exposed to sunlight?", a:["Vitamin D","Vitamin C","Vitamin A","Vitamin B12"], answer:"Vitamin D"},
-      {cat:"General", q:"Who painted the Mona Lisa?", a:["Leonardo da Vinci","Michelangelo","Raphael","Van Gogh"], answer:"Leonardo da Vinci"},
-      {cat:"General", q:"What is the smallest prime number?", a:["2","1","3","5"], answer:"2"},
-      {cat:"General", q:"Which country is famous for origami?", a:["Japan","China","Korea","Thailand"], answer:"Japan"},
-      {cat:"General", q:"What gas do plants absorb from the atmosphere?", a:["Carbon dioxide","Oxygen","Nitrogen","Helium"], answer:"Carbon dioxide"},
-      {cat:"General", q:"Which famous scientist developed the theory of relativity?", a:["Albert Einstein","Niels Bohr","Max Planck","Marie Curie"], answer:"Albert Einstein"},
-      {cat:"General", q:"What is the tallest land animal?", a:["Giraffe","Elephant","Polar bear","Moose"], answer:"Giraffe"},
-      {cat:"General", q:"Which continent is the Sahara Desert located on?", a:["Africa","Asia","Australia","South America"], answer:"Africa"},
-      {cat:"General", q:"Which organ pumps blood through the body?", a:["Heart","Lungs","Liver","Kidneys"], answer:"Heart"},
-      {cat:"General", q:"What is the primary language spoken in Brazil?", a:["Portuguese","Spanish","English","French"], answer:"Portuguese"},
-      {cat:"General", q:"How many letters are in the English alphabet?", a:["26","24","28","25"], answer:"26"},
-      {cat:"General", q:"What is the largest mammal in the world?", a:["Blue whale","Elephant","Whale shark","Giraffe"], answer:"Blue whale"},
-      {cat:"General", q:"Which season comes after summer in the Northern Hemisphere?", a:["Autumn","Winter","Spring","Monsoon"], answer:"Autumn"},
-    ]; // 100 total
-
-    /*************************
-     * PREP QUESTIONS (RANDOM CORRECT INDEXES + NO DUPES) *
-     *************************/
     function prepareQuestions(raw) {
-      // Randomize answer order per question and set "correct" index accordingly
       return raw.map(q => {
         const shuffledAnswers = shuffle(q.a);
         const correctIndex = shuffledAnswers.findIndex(x => x === q.answer);
@@ -262,44 +108,12 @@
       });
     }
 
-    /*********************
-     * LEADERBOARD UTILS *
-     *********************/
-    const LB_KEY = "trivia_hero_leaderboard_v1";
-    function loadLeaderboard() {
-      try {
-        const raw = localStorage.getItem(LB_KEY);
-        if (!raw) return [];
-        const arr = JSON.parse(raw);
-        return Array.isArray(arr) ? arr : [];
-      } catch {
-        return [];
-      }
-    }
-    function saveLeaderboard(list) {
-      localStorage.setItem(LB_KEY, JSON.stringify(list));
-    }
-    function addScoreToLeaderboard(name, score, mode) {
-      const entry = {
-        name: name.trim().slice(0, 20) || "Player",
-        score,
-        mode, // "Classic 🎯" or "Expert ✍️"
-        date: new Date().toISOString()
-      };
-      const lb = loadLeaderboard();
-      lb.push(entry);
-      lb.sort((a, b) => b.score - a.score);
-      const top10 = lb.slice(0, 10);
-      saveLeaderboard(top10);
-      return top10;
-    }
-
-    /********************
-     * MAIN APPLICATION *
-     ********************/
+    /*******************
+     * APP
+     *******************/
     const MODES = {
-      CLASSIC: { key: "CLASSIC", label: "Classic 🎯", basePoints: 100, duration: 60, expert: false },
-      EXPERT:  { key: "EXPERT",  label: "Expert ✍️",  basePoints: 150, duration: 90, expert: true }
+      CLASSIC: { key:"CLASSIC",label:"Classic 🎯",basePoints:100,duration:60,expert:false },
+      EXPERT: { key:"EXPERT",label:"Expert ✍️",basePoints:150,duration:90,expert:true }
     };
 
     function useVoices() {
@@ -307,474 +121,112 @@
       useEffect(() => {
         const setVoice = () => { voiceRef.current = getFemaleVoice(); };
         setVoice();
-        if (window.speechSynthesis) {
-          window.speechSynthesis.onvoiceschanged = setVoice;
-        }
+        if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = setVoice;
       }, []);
       return voiceRef;
     }
 
     function TriviaHero() {
-      const [screen, setScreen] = useState("HOME"); // HOME | GAME | RESULTS | LEADERBOARD
-      const [mode, setMode] = useState(MODES.CLASSIC);
-      const [questions, setQuestions] = useState([]);
-      const [qIndex, setQIndex] = useState(0);
-      const [timeLeft, setTimeLeft] = useState(mode.duration);
-      const [score, setScore] = useState(0);
-      const [streak, setStreak] = useState(0);
-      const [correctCount, setCorrectCount] = useState(0);
-      const [answered, setAnswered] = useState(0);
-      const [selected, setSelected] = useState(null); // selected choice index (Classic)
-      const [feedback, setFeedback] = useState(null); // "correct" | "incorrect" | null
-      const [paused, setPaused] = useState(false);
-      const [playerName, setPlayerName] = useState("");
-      const [leaderboard, setLeaderboard] = useState(loadLeaderboard());
-      const [canSave, setCanSave] = useState(false);
+      const [screen,setScreen]=useState("HOME");
+      const [mode,setMode]=useState(MODES.CLASSIC);
+      const [questions,setQuestions]=useState([]);
+      const [qIndex,setQIndex]=useState(0);
+      const [timeLeft,setTimeLeft]=useState(mode.duration);
+      const [score,setScore]=useState(0);
+      const [streak,setStreak]=useState(0);
+      const [selected,setSelected]=useState(null);
+      const [feedback,setFeedback]=useState(null);
+      const [typed,setTyped]=useState("");
 
-      const voiceRef = useVoices();
-      const timerRef = useRef(null);
-      const advanceRef = useRef(null);
+      const voiceRef=useVoices();
+      const currentQuestion=questions[qIndex];
 
-      const currentQuestion = questions[qIndex];
-
-      const showLeaderboardButton = leaderboard && leaderboard.length > 0;
-
-      // Start a new game
-      const startGame = () => {
+      const startGame=async()=>{
         stopSpeech();
-        const prepped = prepareQuestions(QUESTIONS_RAW);
-        // Shuffle questions order (no duplicates during the session)
-        const shuffledQuestions = shuffle(prepped);
-        setQuestions(shuffledQuestions);
+        const raw=await loadQuestions();
+        const prepped=prepareQuestions(raw);
+        setQuestions(shuffle(prepped));
         setQIndex(0);
         setTimeLeft(mode.duration);
         setScore(0);
         setStreak(0);
-        setCorrectCount(0);
-        setAnswered(0);
         setSelected(null);
         setFeedback(null);
-        setPaused(false);
-        setCanSave(false);
         setScreen("GAME");
       };
 
-      // Timer effect
-      useEffect(() => {
-        if (screen !== "GAME" || paused) return;
-        if (timeLeft <= 0) {
-          endGame();
-          return;
-        }
-        timerRef.current = setInterval(() => {
-          setTimeLeft(t => t - 1);
-        }, 1000);
-        return () => clearInterval(timerRef.current);
-      }, [screen, paused, timeLeft]);
-
-      // Speak question when it changes / appears
-      useEffect(() => {
-        if (screen === "GAME" && currentQuestion && !paused) {
-          speak(currentQuestion.q, voiceRef);
-        }
-      }, [screen, qIndex, paused, currentQuestion]);
-
-      const endGame = () => {
-        stopSpeech();
-        clearInterval(timerRef.current);
-        clearTimeout(advanceRef.current);
-        setScreen("RESULTS");
-        // Determine if score is top 10 eligible
-        const lb = loadLeaderboard();
-        const all = [...lb, { name: "temp", score }];
-        all.sort((a, b) => b.score - a.score);
-        const rank = all.findIndex(e => e.name === "temp" && e.score === score) + 1;
-        const eligible = rank <= 10 || lb.length < 10;
-        setCanSave(eligible);
-      };
-
-      const quitToHome = () => {
-        stopSpeech();
-        clearInterval(timerRef.current);
-        clearTimeout(advanceRef.current);
-        setScreen("HOME");
-        setPaused(false);
-      };
-
-      const pauseGame = () => {
-        setPaused(true);
-        stopSpeech();
-      };
-      const resumeGame = () => setPaused(false);
-
-      const timerColor = timeLeft > 30 ? "text-green-300" : timeLeft > 10 ? "text-yellow-300" : "text-red-300";
-      const progressBarColor = timeLeft > 30 ? "bg-green-400" : timeLeft > 10 ? "bg-yellow-400" : "bg-red-400";
-      const timerPercent = Math.max(0, Math.min(100, Math.round((timeLeft / mode.duration) * 100)));
-
-      // Handle answer (Classic)
-      const handleAnswer = (idx) => {
-        if (selected !== null || !currentQuestion) return; // already answered
-        setSelected(idx);
-        const isCorrect = idx === currentQuestion.correct;
-        setFeedback(isCorrect ? "correct" : "incorrect");
-        setAnswered(a => a + 1);
-        if (isCorrect) {
-          const newStreak = streak + 1;
+      const handleAnswer=(i)=>{
+        if(selected!==null)return;
+        setSelected(i);
+        const isCorrect=i===currentQuestion.correct;
+        setFeedback(isCorrect?"correct":"incorrect");
+        if(isCorrect){
+          const newStreak=streak+1;
           setStreak(newStreak);
-          setCorrectCount(c => c + 1);
-          const points = mode.basePoints + 50 * newStreak;
-          setScore(s => s + points);
-        } else {
+          setScore(s=>s+mode.basePoints+50*newStreak);
+        }else{
           setStreak(0);
         }
-        // Auto-advance
-        clearTimeout(advanceRef.current);
-        advanceRef.current = setTimeout(() => nextQuestion(), 1500);
+        setTimeout(()=>{setQIndex(qIndex+1);setSelected(null);setFeedback(null);},1500);
       };
 
-      // Handle submit (Expert)
-      const [typed, setTyped] = useState("");
-      const submitTypedAnswer = () => {
-        if (!currentQuestion) return;
-        // Prevent multiple submits quickly
-        if (feedback) return;
-        const target = currentQuestion.answer;
-        const sim = similarity(typed, target);
-        const isCorrect = sim >= 0.8;
-        setFeedback(isCorrect ? "correct" : "incorrect");
-        setAnswered(a => a + 1);
-        if (isCorrect) {
-          const newStreak = streak + 1;
+      const submitTypedAnswer=()=>{
+        if(feedback) return;
+        const sim=similarity(typed,currentQuestion.answer);
+        const isCorrect=sim>=0.8;
+        setFeedback(isCorrect?"correct":"incorrect");
+        if(isCorrect){
+          const newStreak=streak+1;
           setStreak(newStreak);
-          setCorrectCount(c => c + 1);
-          const points = mode.basePoints + 50 * newStreak;
-          setScore(s => s + points);
-        } else {
+          setScore(s=>s+mode.basePoints+50*newStreak);
+        }else{
           setStreak(0);
         }
-        clearTimeout(advanceRef.current);
-        advanceRef.current = setTimeout(() => {
-          setTyped("");
-          nextQuestion();
-        }, 2500);
+        setTimeout(()=>{setQIndex(qIndex+1);setFeedback(null);setTyped("");},2500);
       };
 
-      const nextQuestion = () => {
-        setSelected(null);
-        setFeedback(null);
-        if (qIndex + 1 >= questions.length) {
-          endGame();
-        } else {
-          setQIndex(i => i + 1);
-        }
-      };
-
-      const saveScore = () => {
-        const updated = addScoreToLeaderboard(playerName || "Player", score, mode.label);
-        setLeaderboard(updated);
-        setCanSave(false);
-      };
-
-      const accuracy = answered ? Math.round((correctCount / answered) * 100) : 0;
-
-      /* ----------- SCREENS ----------- */
-
-      const HomeScreen = () => (
-        <div className="flex items-center justify-center h-full p-4">
-          <div className="w-full max-w-3xl bg-white/10 backdrop-blur rounded-2xl shadow-xl p-6 sm:p-10">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <TrophyIcon className="w-10 h-10 text-yellow-300" />
-              <h1 className="text-4xl sm:text-5xl font-extrabold">Trivia Hero</h1>
-            </div>
-
-            <p className="text-center text-white/80 mb-6">Choose your mode and conquer the leaderboard!</p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-              <button
-                className={`rounded-xl p-5 text-left bg-white/10 hover:bg-white/20 transition focus:outline-none ring-1 ring-white/20 ${mode.key==='CLASSIC'?'ring-2 ring-yellow-300':''}`}
-                onClick={() => setMode(MODES.CLASSIC)}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <StarIcon className="w-6 h-6 text-yellow-300" />
-                  <span className="font-bold">Classic 🎯</span>
-                </div>
-                <ul className="text-sm text-white/80 list-disc pl-5 space-y-1">
-                  <li>Multiple choice</li>
-                  <li>60 seconds</li>
-                  <li>100 base points + 50/streak</li>
-                </ul>
-              </button>
-
-              <button
-                className={`rounded-xl p-5 text-left bg-white/10 hover:bg-white/20 transition focus:outline-none ring-1 ring-white/20 ${mode.key==='EXPERT'?'ring-2 ring-emerald-300':''}`}
-                onClick={() => setMode(MODES.EXPERT)}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <StarIcon className="w-6 h-6 text-emerald-300" />
-                  <span className="font-bold">Expert ✍️</span>
-                </div>
-                <ul className="text-sm text-white/80 list-disc pl-5 space-y-1">
-                  <li>Type your answer</li>
-                  <li>90 seconds</li>
-                  <li>150 base points + fuzzy match (≥80%)</li>
-                </ul>
-              </button>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <button
-                onClick={startGame}
-                className="bg-white text-indigo-700 font-bold px-6 py-3 rounded-xl shadow hover:shadow-lg hover:bg-white/90 transition"
-              >
-                Start Game
-              </button>
-              {showLeaderboardButton && (
-                <button
-                  onClick={() => setScreen("LEADERBOARD")}
-                  className="bg-white/10 px-6 py-3 rounded-xl shadow hover:bg-white/20 transition"
-                >
-                  View Leaderboard
-                </button>
-              )}
-            </div>
+      const HomeScreen=()=>(
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center space-y-4">
+            <h1 className="text-4xl font-bold">Trivia Hero</h1>
+            <button onClick={()=>setMode(MODES.CLASSIC)} className="px-4 py-2 bg-white/20 rounded">{MODES.CLASSIC.label}</button>
+            <button onClick={()=>setMode(MODES.EXPERT)} className="px-4 py-2 bg-white/20 rounded">{MODES.EXPERT.label}</button>
+            <div><button onClick={startGame} className="px-6 py-3 bg-white text-indigo-700 rounded">Start</button></div>
           </div>
         </div>
       );
 
-      const GameHud = () => (
-        <div className="flex items-center justify-between mb-4">
-          {/* Timer */}
-          <div className="flex items-center gap-2">
-            <ClockIcon className={`w-6 h-6 ${timerColor}`} />
-            <div className="w-32">
-              <div className="text-sm">{timeLeft}s</div>
-              <div className="w-full bg-white/20 h-2 rounded">
-                <div className={`${progressBarColor} h-2 rounded`} style={{ width: `${timerPercent}%` }}></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Score / Streak */}
-          <div className="text-right">
-            <div className="text-sm">Score</div>
-            <div className="text-xl font-bold">{score}</div>
-            <div className="text-xs opacity-80">Streak: {streak}</div>
-          </div>
-        </div>
-      );
-
-      const GameScreen = () => (
+      const GameScreen=()=>(
         <div className="flex items-center justify-center h-full p-4">
-          <div className="w-full max-w-3xl bg-white/10 backdrop-blur rounded-2xl shadow-xl p-4 sm:p-6">
-            <div className="flex items-center justify-between mb-3">
-              <GameHud />
-              <button
-                className="ml-4 bg-white/10 hover:bg-white/20 p-2 rounded-lg"
-                onClick={paused ? resumeGame : pauseGame}
-                aria-label={paused ? "Resume" : "Pause"}
-                title={paused ? "Resume" : "Pause"}
-              >
-                <PauseIcon className="w-6 h-6" />
-              </button>
-            </div>
-
-            {/* Question meta */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm opacity-90">Question {qIndex + 1} / {questions.length}</div>
-              <div className="text-sm opacity-90">{currentQuestion?.cat}</div>
-            </div>
-
-            {/* Question text + speaker */}
-            <div className="bg-white/10 rounded-xl p-4 mb-4">
-              <div className="flex items-start justify-between gap-3">
-                <h2 className="text-xl sm:text-2xl font-semibold">{currentQuestion?.q || ""}</h2>
-                <button
-                  className="shrink-0 bg-white/10 hover:bg-white/20 p-2 rounded-lg"
-                  onClick={() => currentQuestion && speak(currentQuestion.q, voiceRef)}
-                  aria-label="Read question"
-                  title="Read question"
-                >
-                  <SpeakerIcon className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Answers */}
+          <div className="max-w-2xl w-full bg-white/10 p-6 rounded-xl">
+            <h2 className="text-xl mb-4">{currentQuestion?.q}</h2>
             {!mode.expert ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {currentQuestion?.a.map((opt, i) => {
-                  const isCorrect = currentQuestion.correct === i;
-                  const isSelected = selected === i;
-                  let classes = "w-full text-left rounded-xl p-3 bg-white/10 hover:bg-white/20 transition";
-                  if (feedback && isSelected && isCorrect) classes = "w-full text-left rounded-xl p-3 bg-green-500 text-white";
-                  if (feedback && isSelected && !isCorrect) classes = "w-full text-left rounded-xl p-3 bg-red-500 text-white";
-                  if (feedback && !isSelected && isCorrect) classes = "w-full text-left rounded-xl p-3 bg-green-600/80";
-                  return (
-                    <button key={i} className={classes} onClick={() => handleAnswer(i)} disabled={selected!==null}>
-                      {opt}
-                    </button>
-                  );
-                })}
+              <div className="grid grid-cols-2 gap-3">
+                {currentQuestion?.a.map((opt,i)=>(
+                  <button key={i}
+                    onClick={()=>handleAnswer(i)}
+                    className="p-3 rounded bg-white/20">{opt}</button>
+                ))}
               </div>
-            ) : (
-              <div className="flex flex-col sm:flex-row gap-3">
-                <input
-                  type="text"
-                  value={typed}
-                  onChange={e => setTyped(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') submitTypedAnswer(); }}
-                  className="flex-1 rounded-xl p-3 text-slate-900"
-                  placeholder="Type your answer…"
-                  disabled={!!feedback}
-                />
-                <button
-                  onClick={submitTypedAnswer}
-                  disabled={!!feedback}
-                  className="bg-white text-indigo-700 font-bold px-5 py-3 rounded-xl shadow hover:shadow-lg hover:bg-white/90 transition"
-                >
-                  Submit
-                </button>
-              </div>
-            )}
-
-            {/* Pause Overlay */}
-            {paused && (
-              <div className="fixed inset-0 flex items-center justify-center p-4">
-                <div className="absolute inset-0 bg-black/50" />
-                <div className="relative w-full max-w-md bg-white text-slate-900 rounded-2xl shadow-2xl p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <PauseIcon className="w-6 h-6 text-indigo-600" />
-                    <h3 className="text-xl font-bold">Paused</h3>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <button onClick={resumeGame} className="flex-1 bg-indigo-600 text-white font-semibold px-4 py-3 rounded-xl hover:bg-indigo-700">Resume</button>
-                    <button onClick={quitToHome} className="flex-1 bg-slate-200 text-slate-900 font-semibold px-4 py-3 rounded-xl hover:bg-slate-300">Quit</button>
-                  </div>
-                  <p className="text-sm text-slate-600 mt-3">Timer is paused. Speech has been stopped.</p>
-                </div>
+            ):(
+              <div className="flex gap-2">
+                <input value={typed} onChange={e=>setTyped(e.target.value)} className="flex-1 p-2 text-black rounded"/>
+                <button onClick={submitTypedAnswer} className="px-4 py-2 bg-white text-indigo-700 rounded">Submit</button>
               </div>
             )}
           </div>
         </div>
       );
 
-      const ResultsScreen = () => (
-        <div className="flex items-center justify-center h-full p-4">
-          <div className="w-full max-w-2xl bg-white/10 backdrop-blur rounded-2xl shadow-xl p-6">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <TrophyIcon className="w-10 h-10 text-yellow-300" />
-              <h2 className="text-3xl font-extrabold">Results</h2>
-            </div>
-            <div className="text-center mb-6">
-              <div className="text-5xl font-black">{score}</div>
-              <div className="opacity-80">Final Score</div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-              <div className="bg-white/10 rounded-xl p-4 text-center">
-                <div className="text-2xl font-bold">{answered}</div>
-                <div className="text-sm opacity-80">Answered</div>
-              </div>
-              <div className="bg-white/10 rounded-xl p-4 text-center">
-                <div className="text-2xl font-bold">{correctCount}</div>
-                <div className="text-sm opacity-80">Correct</div>
-              </div>
-              <div className="bg-white/10 rounded-xl p-4 text-center">
-                <div className="text-2xl font-bold">{accuracy}%</div>
-                <div className="text-sm opacity-80">Accuracy</div>
-              </div>
-            </div>
-
-            {canSave ? (
-              <div className="bg-white/10 rounded-xl p-4 mb-4">
-                <div className="mb-2 font-semibold">Save Your Score (Top 10!)</div>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={playerName}
-                    onChange={e => setPlayerName(e.target.value)}
-                    className="flex-1 rounded-lg p-3 text-slate-900"
-                    placeholder="Your name"
-                  />
-                  <button onClick={saveScore} className="bg-white text-indigo-700 font-bold px-5 py-3 rounded-xl shadow hover:shadow-lg hover:bg-white/90 transition">Save</button>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center mb-4 opacity-80">Not a top-10 score. Try again!</div>
-            )}
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <button onClick={startGame} className="bg-white text-indigo-700 font-bold px-6 py-3 rounded-xl shadow hover:shadow-lg hover:bg-white/90 transition">Play Again</button>
-              <button onClick={() => setScreen("HOME")} className="bg-white/10 px-6 py-3 rounded-xl shadow hover:bg-white/20 transition">Back to Home</button>
-              <button onClick={() => setScreen("LEADERBOARD")} className="bg-white/10 px-6 py-3 rounded-xl shadow hover:bg-white/20 transition">View Leaderboard</button>
-            </div>
-          </div>
-        </div>
-      );
-
-      const LeaderboardScreen = () => {
-        const medals = ["🥇","🥈","🥉"];
-        return (
-          <div className="flex items-center justify-center h-full p-4">
-            <div className="w-full max-w-3xl bg-white/10 backdrop-blur rounded-2xl shadow-xl p-6">
-              <div className="flex items-center justify-center gap-3 mb-6">
-                <TrophyIcon className="w-10 h-10 text-yellow-300" />
-                <h2 className="text-3xl font-extrabold">Leaderboard</h2>
-              </div>
-              {leaderboard.length === 0 ? (
-                <div className="text-center opacity-80">No scores yet. Play a game first!</div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead className="text-white/80">
-                      <tr>
-                        <th className="py-2">Rank</th>
-                        <th className="py-2">Name</th>
-                        <th className="py-2">Score</th>
-                        <th className="py-2">Mode</th>
-                        <th className="py-2">Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {leaderboard.map((e, i) => {
-                        const dateStr = new Date(e.date).toLocaleString();
-                        const special =
-                          i === 0 ? "bg-yellow-300/20" :
-                          i === 1 ? "bg-gray-300/20" :
-                          i === 2 ? "bg-orange-300/20" : "";
-                        return (
-                          <tr key={i} className={`border-t border-white/10 ${special}`}>
-                            <td className="py-2 font-semibold">{i < 3 ? medals[i] : i + 1}</td>
-                            <td className="py-2">{e.name}</td>
-                            <td className="py-2">{e.score}</td>
-                            <td className="py-2">{e.mode}</td>
-                            <td className="py-2 text-white/80">{dateStr}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-              <div className="mt-6 flex items-center justify-center">
-                <button onClick={() => setScreen("HOME")} className="bg-white/10 px-6 py-3 rounded-xl shadow hover:bg-white/20 transition">Back to Home</button>
-              </div>
-            </div>
-          </div>
-        );
-      };
-
-      /* Render */
       return (
         <div className="h-full">
-          {screen === "HOME" && <HomeScreen />}
-          {screen === "GAME" && <GameScreen />}
-          {screen === "RESULTS" && <ResultsScreen />}
-          {screen === "LEADERBOARD" && <LeaderboardScreen />}
+          {screen==="HOME" && <HomeScreen/>}
+          {screen==="GAME" && <GameScreen/>}
         </div>
       );
     }
 
-    ReactDOM.createRoot(document.getElementById("root")).render(<TriviaHero />);
+    ReactDOM.createRoot(document.getElementById("root")).render(<TriviaHero/>);
   </script>
 </body>
 </html>
