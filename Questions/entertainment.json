@@ -1,0 +1,17 @@
+[
+  { "q": "Who directed the film 'Jurassic Park' (1993)?", "a": ["Steven Spielberg", "James Cameron", "George Lucas", "Ridley Scott"], "answer": "Steven Spielberg" },
+  { "q": "'Bohemian Rhapsody' was performed by which band?", "a": ["Queen", "The Beatles", "Pink Floyd", "Led Zeppelin"], "answer": "Queen" },
+  { "q": "Walter White is a character from which TV series?", "a": ["Breaking Bad", "The Wire", "Mad Men", "The Sopranos"], "answer": "Breaking Bad" },
+  { "q": "Which film won the 1997 Best Picture Oscar?", "a": ["Titanic", "L.A. Confidential", "Good Will Hunting", "As Good as It Gets"], "answer": "Titanic" },
+  { "q": "Which video game character is a plumber in a red hat?", "a": ["Mario", "Sonic", "Link", "Master Chief"], "answer": "Mario" },
+  { "q": "Who wrote 'A Song of Ice and Fire'?", "a": ["George R.R. Martin", "J.K. Rowling", "Brandon Sanderson", "Patrick Rothfuss"], "answer": "George R.R. Martin" },
+  { "q": "What was Disney's first full-length animated feature film?", "a": ["Snow White and the Seven Dwarfs", "Pinocchio", "Fantasia", "Bambi"], "answer": "Snow White and the Seven Dwarfs" },
+  { "q": "Who played Hermione Granger in the Harry Potter films?", "a": ["Emma Watson", "Emma Stone", "Keira Knightley", "Natalie Portman"], "answer": "Emma Watson" },
+  { "q": "In which movie is the quote 'I'll be back' famous?", "a": ["The Terminator", "Predator", "Robocop", "Die Hard"], "answer": "The Terminator" },
+  { "q": "'Stranger Things' streams on which platform?", "a": ["Netflix", "Amazon Prime Video", "Hulu", "Disney+"], "answer": "Netflix" },
+  { "q": "Who sings 'Shape of You'?", "a": ["Ed Sheeran", "Justin Bieber", "Adele", "Taylor Swift"], "answer": "Ed Sheeran" },
+  { "q": "Which studio produces the Marvel Cinematic Universe?", "a": ["Marvel Studios", "Warner Bros.", "Paramount", "Universal"], "answer": "Marvel Studios" },
+  { "q": "Which awards primarily honor achievements in recorded music in the U.S.?", "a": ["Grammy Awards", "Emmy Awards", "Tony Awards", "Oscars"], "answer": "Grammy Awards" },
+  { "q": "What is the name of Pixar’s iconic desk lamp mascot?", "a": ["Luxo Jr.", "Anglepoise", "Lumi", "Pix"], "answer": "Luxo Jr." },
+  { "q": "What is the signature weapon of the Jedi in Star Wars?", "a": ["Lightsaber", "Blaster", "Bowcaster", "Vibroblade"], "answer": "Lightsaber" }
+]
