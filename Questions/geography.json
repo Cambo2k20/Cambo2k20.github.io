@@ -1,0 +1,12 @@
+[
+  { "q": "What is the largest desert in the world?", "a": ["Antarctica", "Sahara", "Gobi", "Arabian"], "answer": "Antarctica" },
+  { "q": "The Danube River flows into which sea?", "a": ["Black Sea", "Mediterranean Sea", "Red Sea", "Caspian Sea"], "answer": "Black Sea" },
+  { "q": "Which country has the city of Marrakesh?", "a": ["Morocco", "Egypt", "Tunisia", "Algeria"], "answer": "Morocco" },
+  { "q": "What is the capital city of New Zealand?", "a": ["Wellington", "Auckland", "Christchurch", "Hamilton"], "answer": "Wellington" },
+  { "q": "Mount Kilimanjaro is located in which country?", "a": ["Tanzania", "Kenya", "Uganda", "Ethiopia"], "answer": "Tanzania" },
+  { "q": "Which is the longest river in the world (by most measures)?", "a": ["Nile", "Amazon", "Yangtze", "Mississippi"], "answer": "Nile" },
+  { "q": "Which country spans the most time zones (including territories)?", "a": ["France", "USA", "Russia", "UK"], "answer": "France" },
+  { "q": "What is the largest island in the world?", "a": ["Greenland", "New Guinea", "Borneo", "Madagascar"], "answer": "Greenland" },
+  { "q": "Which city famously spans two continents, Europe and Asia?", "a": ["Istanbul", "Moscow", "Athens", "Ankara"], "answer": "Istanbul" },
+  { "q": "Lake Baikal is in which country?", "a": ["Russia", "Mongolia", "Kazakhstan", "China"], "answer": "Russia" }
+]
