@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Trivia Hero</title>
 
-  <!-- React 18 + ReactDOM + Babel (for JSX in-browser) -->
+  <!-- React 18 + ReactDOM + Babel (load first) -->
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -27,19 +27,22 @@
 <body>
   <div id="root"></div>
 
+  <!-- Your React App -->
   <script type="text/babel">
     const { useState, useEffect } = React;
-    const { createIcons, icons } = lucide;
-const Trophy = (props) => <i data-lucide="trophy" {...props}></i>;
-const Star = (props) => <i data-lucide="star" {...props}></i>;
-const Circle = (props) => <i data-lucide="circle" {...props}></i>;
-const Volume2 = (props) => <i data-lucide="volume-2" {...props}></i>;
-const Play = (props) => <i data-lucide="play" {...props}></i>;
-const Clock = (props) => <i data-lucide="clock" {...props}></i>;
-const Award = (props) => <i data-lucide="award" {...props}></i>;
-const Home = (props) => <i data-lucide="home" {...props}></i>;
-const Pause = (props) => <i data-lucide="pause" {...props}></i>;
-useEffect(() => createIcons(), []);
+    const { createIcons, icons } = window.lucide;  // ✅ FIXED
+
+    const Trophy = (props) => <i data-lucide="trophy" {...props}></i>;
+    const Star = (props) => <i data-lucide="star" {...props}></i>;
+    const Circle = (props) => <i data-lucide="circle" {...props}></i>;
+    const Volume2 = (props) => <i data-lucide="volume-2" {...props}></i>;
+    const Play = (props) => <i data-lucide="play" {...props}></i>;
+    const Clock = (props) => <i data-lucide="clock" {...props}></i>;
+    const Award = (props) => <i data-lucide="award" {...props}></i>;
+    const Home = (props) => <i data-lucide="home" {...props}></i>;
+    const Pause = (props) => <i data-lucide="pause" {...props}></i>;
+
+    useEffect(() => createIcons(), []);
 
     const QUESTIONS = [
       { q: "What is the capital of France?", a: ["Paris", "Berlin", "Madrid", "Rome"], correct: 0, answer: "Paris" },
@@ -823,7 +826,7 @@ useEffect(() => createIcons(), []);
       return null;
     }
 
-    ReactDOM.createRoot(document.getElementById("root")).render(<TriviaHero />);
+        ReactDOM.createRoot(document.getElementById("root")).render(<TriviaHero />);
   </script>
 </body>
 </html>
