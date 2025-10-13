@@ -24,9 +24,30 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
-    /*******************
-     * HELPERS
-     *******************/
+    /***********************
+     * SVG ICONS
+     ***********************/
+    const TrophyIcon = ({ className="w-8 h-8" }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M6 2a1 1 0 0 0-1 1v2H3a1 1 0 0 0-1 1c0 3.314 2.686 6 6 6 .63 0 1.24-.095 1.816-.273A6.996 6.996 0 0 0 11 15.917V18H8a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2h-3v-2.083a6.996 6.996 0 0 0 1.184-4.19A6.974 6.974 0 0 0 16 12c3.314 0 6-2.686 6-6a1 1 0 0 0-1-1h-2V3a1 1 0 0 0-1-1H6Zm1 3h10v2a1 1 0 0 0 1 1h1.938A4.002 4.002 0 0 1 16 11c-2.152 0-3.999-1.648-4.2-3.783A1 1 0 0 0 10.807 6H7V5Zm-2 3a1 1 0 0 0 1-1V6H4.062A4.002 4.002 0 0 0 7 11c.346 0 .679-.044 1-.128V8Z"/>
+      </svg>
+    );
+    const StarIcon = ({ className="w-6 h-6" }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="currentColor"><path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.787 1.402 8.168L12 18.896l-7.336 3.87 1.402-8.168L.132 9.211l8.2-1.193L12 .587z"/></svg>
+    );
+    const ClockIcon = ({ className="w-5 h-5" }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.75A10.25 10.25 0 1 0 22.25 12 10.262 10.262 0 0 0 12 1.75zm0 18.5A8.25 8.25 0 1 1 20.25 12 8.26 8.26 0 0 1 12 20.25z"/><path d="M12.75 7a.75.75 0 0 0-1.5 0v5a.75.75 0 0 0 .22.53l3.5 3.5a.75.75 0 1 0 1.06-1.06l-3.28-3.28V7z"/></svg>
+    );
+    const PauseIcon = ({ className="w-5 h-5" }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="currentColor"><path d="M6 4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H6zm10 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2z"/></svg>
+    );
+    const SpeakerIcon = ({ className="w-5 h-5" }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.25-3.9v7.8A4.5 4.5 0 0 0 16.5 12zM14.25 3.11v2.09a7.5 7.5 0 0 1 0 13.6v2.09c3.5-1.12 6-4.38 6-8.09s-2.5-6.97-6-8.09z"/></svg>
+    );
+
+    /********************
+     * UTILITIES
+     ********************/
     function shuffle(array) {
       const arr = array.slice();
       for (let i = arr.length - 1; i > 0; i--) {
@@ -35,10 +56,9 @@
       }
       return arr;
     }
-
     function levenshtein(a, b) {
-      a = a.toLowerCase().trim();
-      b = b.toLowerCase().trim();
+      a = (a||"").toLowerCase().trim();
+      b = (b||"").toLowerCase().trim();
       const m = a.length, n = b.length;
       const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
       for (let i = 0; i <= m; i++) dp[i][0] = i;
@@ -61,59 +81,102 @@
       return 1 - dist / Math.max(a.length, b.length);
     }
 
+    // Speech
     function getFemaleVoice() {
       const synth = window.speechSynthesis;
-      const voices = synth.getVoices();
-      if (!voices || voices.length === 0) return null;
-      const preferred = ["Samantha", "Victoria", "Google UK English Female", "Google US English", "Microsoft Zira"];
+      const voices = synth.getVoices() || [];
+      const preferred = ["Samantha","Victoria","Google UK English Female","Google US English","Microsoft Zira"];
       return (
         voices.find(v => /female/i.test(v.name)) ||
         voices.find(v => preferred.some(p => v.name.includes(p))) ||
         voices.find(v => /English/i.test(v.lang)) ||
-        voices[0]
+        voices[0] || null
       );
     }
-
     function speak(text, voiceRef) {
       if (!window.speechSynthesis) return;
       window.speechSynthesis.cancel();
       const utter = new SpeechSynthesisUtterance(text);
       const voice = voiceRef.current || getFemaleVoice();
       if (voice) utter.voice = voice;
+      utter.rate = 1; utter.pitch = 1; utter.volume = 1;
       window.speechSynthesis.speak(utter);
     }
     function stopSpeech() {
       if (window.speechSynthesis) window.speechSynthesis.cancel();
     }
 
-    /*******************
-     * LOAD QUESTIONS
-     *******************/
-    async function loadQuestions() {
-      const categories = ["geography","history","science","entertainment","sports","literature","general"];
-      let all = [];
-      for (let cat of categories) {
-        const res = await fetch(`Questions/${cat}.json`); // capital Q!
-        const data = await res.json();
-        all = all.concat(data);
-      }
-      return all;
-    }
-
+    // Prepare questions (shuffle answers & set correct index)
     function prepareQuestions(raw) {
       return raw.map(q => {
-        const shuffledAnswers = shuffle(q.a);
-        const correctIndex = shuffledAnswers.findIndex(x => x === q.answer);
-        return { ...q, a: shuffledAnswers, correct: correctIndex };
+        const opts = shuffle(q.a);
+        const correctIndex = opts.findIndex(x => x === q.answer);
+        return { ...q, a: opts, correct: correctIndex };
       });
     }
 
-    /*******************
+    /********************
+     * REMOTE QUESTION LOADER (with solid errors)
+     ********************/
+    async function loadQuestions() {
+      const categories = ["geography","history","science","entertainment","sports","literature","general"];
+      const results = [];
+      const tried = [];
+      for (const cat of categories) {
+        // Make absolute URL safe for GitHub Pages project paths
+        const url = new URL(`Questions/${cat}.json`, window.location.href).href;
+        tried.push(url);
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) {
+          const err = new Error(`Failed to fetch ${url} (${res.status})`);
+          err.tried = tried;
+          throw err;
+        }
+        let data;
+        try {
+          data = await res.json();
+        } catch (e) {
+          const err = new Error(`Invalid JSON in ${url}`);
+          err.tried = tried;
+          throw err;
+        }
+        if (!Array.isArray(data)) {
+          const err = new Error(`Expected an array in ${url}`);
+          err.tried = tried;
+          throw err;
+        }
+        results.push(...data);
+      }
+      return results;
+    }
+
+    /********************
+     * LEADERBOARD
+     ********************/
+    const LB_KEY = "trivia_hero_leaderboard_v1";
+    const loadLeaderboard = () => {
+      try {
+        const raw = localStorage.getItem(LB_KEY);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      } catch { return []; }
+    };
+    const saveLeaderboard = (list) => localStorage.setItem(LB_KEY, JSON.stringify(list));
+    const addScore = (name, score, mode) => {
+      const entry = { name: (name||"Player").slice(0,20), score, mode, date: new Date().toISOString() };
+      const lb = loadLeaderboard(); lb.push(entry);
+      lb.sort((a,b)=>b.score-a.score);
+      const top10 = lb.slice(0,10);
+      saveLeaderboard(top10);
+      return top10;
+    };
+
+    /********************
      * APP
-     *******************/
+     ********************/
     const MODES = {
-      CLASSIC: { key:"CLASSIC",label:"Classic 🎯",basePoints:100,duration:60,expert:false },
-      EXPERT: { key:"EXPERT",label:"Expert ✍️",basePoints:150,duration:90,expert:true }
+      CLASSIC: { key:"CLASSIC", label:"Classic 🎯", basePoints:100, duration:60, expert:false },
+      EXPERT:  { key:"EXPERT",  label:"Expert ✍️",  basePoints:150, duration:90, expert:true  }
     };
 
     function useVoices() {
@@ -127,149 +190,462 @@
     }
 
     function TriviaHero() {
-      const [screen,setScreen]=useState("HOME");
-      const [mode,setMode]=useState(MODES.CLASSIC);
-      const [questions,setQuestions]=useState([]);
-      const [qIndex,setQIndex]=useState(0);
-      const [timeLeft,setTimeLeft]=useState(mode.duration);
-      const [score,setScore]=useState(0);
-      const [streak,setStreak]=useState(0);
-      const [selected,setSelected]=useState(null);
-      const [feedback,setFeedback]=useState(null);
-      const [typed,setTyped]=useState("");
-      const [answered,setAnswered]=useState(0);
-      const [correctCount,setCorrectCount]=useState(0);
+      const [screen, setScreen] = useState("HOME"); // HOME | GAME | RESULTS | LEADERBOARD
+      const [mode, setMode] = useState(MODES.CLASSIC);
 
-      const voiceRef=useVoices();
-      const currentQuestion=questions[qIndex];
+      const [loading, setLoading] = useState(false);
+      const [loadError, setLoadError] = useState(null);
 
-      const startGame=async()=>{
-        stopSpeech();
-        const raw=await loadQuestions();
-        const prepped=prepareQuestions(raw);
-        setQuestions(shuffle(prepped));
-        setQIndex(0);
-        setTimeLeft(mode.duration);
-        setScore(0);
-        setStreak(0);
-        setSelected(null);
-        setFeedback(null);
-        setTyped("");
-        setAnswered(0);
-        setCorrectCount(0);
-        setScreen("GAME");
-      };
+      const [questions, setQuestions] = useState([]);
+      const [qIndex, setQIndex] = useState(0);
+      const [timeLeft, setTimeLeft] = useState(mode.duration);
+      const [score, setScore] = useState(0);
+      const [streak, setStreak] = useState(0);
+      const [selected, setSelected] = useState(null);
+      const [feedback, setFeedback] = useState(null);
+      const [typed, setTyped] = useState("");
+      const [answered, setAnswered] = useState(0);
+      const [correctCount, setCorrectCount] = useState(0);
+      const [paused, setPaused] = useState(false);
+      const [playerName, setPlayerName] = useState("");
+      const [leaderboard, setLeaderboard] = useState(loadLeaderboard());
+      const [canSave, setCanSave] = useState(false);
 
-      useEffect(()=>{
-        if(screen==="GAME" && currentQuestion){
-          speak(currentQuestion.q,voiceRef);
-        }
-      },[screen,qIndex]);
+      const voiceRef = useVoices();
+      const timerRef = useRef(null);
+      const advanceRef = useRef(null);
+      const currentQuestion = questions[qIndex];
 
-      useEffect(()=>{
-        if(screen!=="GAME") return;
-        if(timeLeft<=0){
-          setScreen("RESULTS");
+      const timerColor = timeLeft > 30 ? "text-green-300" : timeLeft > 10 ? "text-yellow-300" : "text-red-300";
+      const progressBarColor = timeLeft > 30 ? "bg-green-400" : timeLeft > 10 ? "bg-yellow-400" : "bg-red-400";
+      const timerPercent = Math.max(0, Math.min(100, Math.round((timeLeft / mode.duration) * 100)));
+
+      // Timer
+      useEffect(() => {
+        if (screen !== "GAME" || paused) return;
+        if (timeLeft <= 0) {
+          finishGame();
           return;
         }
-        const t=setInterval(()=>setTimeLeft(t=>t-1),1000);
-        return()=>clearInterval(t);
-      },[screen,timeLeft]);
+        timerRef.current = setInterval(() => setTimeLeft(t => t - 1), 1000);
+        return () => clearInterval(timerRef.current);
+      }, [screen, paused, timeLeft]);
 
-      const handleAnswer=(i)=>{
-        if(selected!==null)return;
+      // Speak question on show
+      useEffect(() => {
+        if (screen === "GAME" && currentQuestion && !paused) {
+          speak(currentQuestion.q, voiceRef);
+        }
+      }, [screen, qIndex, paused, currentQuestion]);
+
+      const startGame = async () => {
+        stopSpeech();
+        setLoading(true);
+        setLoadError(null);
+        try {
+          const raw = await loadQuestions();           // fetch from Questions/*.json
+          const prepped = prepareQuestions(raw);
+          const shuffled = shuffle(prepped);
+          setQuestions(shuffled);
+          setQIndex(0);
+          setTimeLeft(mode.duration);
+          setScore(0);
+          setStreak(0);
+          setAnswered(0);
+          setCorrectCount(0);
+          setSelected(null);
+          setFeedback(null);
+          setTyped("");
+          setPaused(false);
+          setCanSave(false);
+          setScreen("GAME");
+        } catch (err) {
+          console.error(err);
+          setLoadError(err.message + (err.tried ? ` | Tried: ${err.tried.join(", ")}` : ""));
+          setScreen("HOME");
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const pauseGame = () => { setPaused(true); stopSpeech(); };
+      const resumeGame = () => setPaused(false);
+
+      const finishGame = () => {
+        stopSpeech();
+        clearInterval(timerRef.current);
+        clearTimeout(advanceRef.current);
+        setScreen("RESULTS");
+        // top-10 eligibility
+        const lb = loadLeaderboard();
+        const temp = [...lb, { name: "__temp__", score }];
+        temp.sort((a,b)=>b.score-a.score);
+        const rank = temp.findIndex(e => e.name==="__temp__" && e.score===score) + 1;
+        setCanSave(rank <= 10 || lb.length < 10);
+      };
+
+      const nextQuestion = () => {
+        setSelected(null);
+        setFeedback(null);
+        if (qIndex + 1 >= questions.length) {
+          finishGame();
+        } else {
+          setQIndex(i => i + 1);
+        }
+      };
+
+      const handleAnswer = (i) => {
+        if (!currentQuestion || selected !== null) return;
         setSelected(i);
-        setAnswered(a=>a+1);
-        const isCorrect=i===currentQuestion.correct;
-        setFeedback(isCorrect?"correct":"incorrect");
-        if(isCorrect){
-          setCorrectCount(c=>c+1);
-          const newStreak=streak+1;
+        setAnswered(a => a + 1);
+        const isCorrect = i === currentQuestion.correct;
+        setFeedback(isCorrect ? "correct" : "incorrect");
+        if (isCorrect) {
+          setCorrectCount(c => c + 1);
+          const newStreak = streak + 1;
           setStreak(newStreak);
-          setScore(s=>s+mode.basePoints+50*newStreak);
-        }else setStreak(0);
-        setTimeout(()=>{setQIndex(qIndex+1);setSelected(null);setFeedback(null);},1500);
+          setScore(s => s + mode.basePoints + 50 * newStreak);
+        } else {
+          setStreak(0);
+        }
+        clearTimeout(advanceRef.current);
+        advanceRef.current = setTimeout(nextQuestion, 1500);
       };
 
-      const submitTypedAnswer=()=>{
-        if(feedback) return;
-        setAnswered(a=>a+1);
-        const sim=similarity(typed,currentQuestion.answer);
-        const isCorrect=sim>=0.8;
-        setFeedback(isCorrect?"correct":"incorrect");
-        if(isCorrect){
-          setCorrectCount(c=>c+1);
-          const newStreak=streak+1;
+      const submitTypedAnswer = () => {
+        if (!currentQuestion || feedback) return;
+        setAnswered(a => a + 1);
+        const sim = similarity(typed, currentQuestion.answer);
+        const isCorrect = sim >= 0.8;
+        setFeedback(isCorrect ? "correct" : "incorrect");
+        if (isCorrect) {
+          setCorrectCount(c => c + 1);
+          const newStreak = streak + 1;
           setStreak(newStreak);
-          setScore(s=>s+mode.basePoints+50*newStreak);
-        }else setStreak(0);
-        setTimeout(()=>{setQIndex(qIndex+1);setFeedback(null);setTyped("");},2500);
+          setScore(s => s + mode.basePoints + 50 * newStreak);
+        } else {
+          setStreak(0);
+        }
+        clearTimeout(advanceRef.current);
+        advanceRef.current = setTimeout(() => { setTyped(""); nextQuestion(); }, 2500);
       };
 
-      const accuracy = answered ? Math.round((correctCount/answered)*100) : 0;
+      const saveScore = () => {
+        const updated = addScore(playerName || "Player", score, mode.label);
+        setLeaderboard(updated);
+        setCanSave(false);
+      };
 
-      const HomeScreen=()=>( 
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center space-y-4">
-            <h1 className="text-5xl font-extrabold">Trivia Hero</h1>
-            <p>Select a mode:</p>
-            <button onClick={()=>setMode(MODES.CLASSIC)} className="px-4 py-2 bg-white/20 rounded">{MODES.CLASSIC.label}</button>
-            <button onClick={()=>setMode(MODES.EXPERT)} className="px-4 py-2 bg-white/20 rounded">{MODES.EXPERT.label}</button>
-            <div><button onClick={startGame} className="px-6 py-3 bg-white text-indigo-700 rounded font-bold">Start Game</button></div>
+      const accuracy = answered ? Math.round((correctCount / answered) * 100) : 0;
+
+      /***************
+       * SCREENS
+       ***************/
+      const HomeScreen = () => (
+        <div className="flex items-center justify-center h-full p-4">
+          <div className="w-full max-w-3xl bg-white/10 backdrop-blur rounded-2xl shadow-xl p-6 sm:p-10">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <TrophyIcon className="w-10 h-10 text-yellow-300" />
+              <h1 className="text-4xl sm:text-5xl font-extrabold">Trivia Hero</h1>
+            </div>
+
+            {loadError && (
+              <div className="mb-4 p-3 rounded-lg bg-red-500/80 text-white text-sm">
+                <div className="font-bold">Couldn’t load questions.</div>
+                <div>{loadError}</div>
+                <ul className="list-disc pl-5 mt-2">
+                  <li>Ensure folder is <b>Questions/</b> (capital Q) next to this index.html.</li>
+                  <li>Files exist: geography.json, history.json, science.json, entertainment.json, sports.json, literature.json, general.json</li>
+                  <li>Each file is valid JSON (no trailing commas).</li>
+                  <li>If testing locally, use a server (e.g. <code>python -m http.server</code>), not <code>file://</code>.</li>
+                </ul>
+              </div>
+            )}
+
+            <p className="text-center text-white/80 mb-6">Choose your mode and conquer the leaderboard!</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <button
+                className={`rounded-xl p-5 text-left bg-white/10 hover:bg-white/20 transition ring-1 ring-white/20 ${mode.key==='CLASSIC'?'ring-2 ring-yellow-300':''}`}
+                onClick={() => setMode(MODES.CLASSIC)}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <StarIcon className="w-6 h-6 text-yellow-300" />
+                  <span className="font-bold">Classic 🎯</span>
+                </div>
+                <ul className="text-sm text-white/80 list-disc pl-5 space-y-1">
+                  <li>Multiple choice</li>
+                  <li>60 seconds</li>
+                  <li>100 base + 50/streak</li>
+                </ul>
+              </button>
+              <button
+                className={`rounded-xl p-5 text-left bg-white/10 hover:bg-white/20 transition ring-1 ring-white/20 ${mode.key==='EXPERT'?'ring-2 ring-emerald-300':''}`}
+                onClick={() => setMode(MODES.EXPERT)}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <StarIcon className="w-6 h-6 text-emerald-300" />
+                  <span className="font-bold">Expert ✍️</span>
+                </div>
+                <ul className="text-sm text-white/80 list-disc pl-5 space-y-1">
+                  <li>Type your answer</li>
+                  <li>90 seconds</li>
+                  <li>150 base + fuzzy match (≥80%)</li>
+                </ul>
+              </button>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={startGame}
+                disabled={loading}
+                className="bg-white text-indigo-700 font-bold px-6 py-3 rounded-xl shadow hover:shadow-lg hover:bg-white/90 transition disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {loading ? "Loading…" : "Start Game"}
+              </button>
+              {leaderboard.length > 0 && (
+                <button
+                  onClick={() => setScreen("LEADERBOARD")}
+                  className="bg-white/10 px-6 py-3 rounded-xl shadow hover:bg-white/20 transition"
+                >
+                  View Leaderboard
+                </button>
+              )}
+            </div>
           </div>
         </div>
       );
 
-      const GameScreen=()=>(
-        <div className="flex items-center justify-center h-full p-4">
-          <div className="max-w-2xl w-full bg-white/10 p-6 rounded-xl">
-            <div className="flex justify-between mb-3">
-              <div>Time: {timeLeft}s</div>
-              <div>Score: {score} | Streak: {streak}</div>
-            </div>
-            <h2 className="text-xl mb-4">{currentQuestion?.q}</h2>
-            {!mode.expert ? (
-              <div className="grid grid-cols-2 gap-3">
-                {currentQuestion?.a.map((opt,i)=>( 
-                  <button key={i}
-                    onClick={()=>handleAnswer(i)}
-                    className={`p-3 rounded ${feedback && i===currentQuestion.correct ? "bg-green-500" : "bg-white/20"}`}>
-                    {opt}
-                  </button>
-                ))}
+      const GameHud = () => (
+        <div className="flex items-center justify-between mb-4">
+          {/* Timer */}
+          <div className="flex items-center gap-2">
+            <ClockIcon className={`w-6 h-6 ${timerColor}`} />
+            <div className="w-32">
+              <div className="text-sm">{timeLeft}s</div>
+              <div className="w-full bg-white/20 h-2 rounded">
+                <div className={`${progressBarColor} h-2 rounded`} style={{ width: `${timerPercent}%` }} />
               </div>
-            ):(
-              <div className="flex gap-2">
-                <input value={typed} onChange={e=>setTyped(e.target.value)} className="flex-1 p-2 text-black rounded"/>
-                <button onClick={submitTypedAnswer} className="px-4 py-2 bg-white text-indigo-700 rounded">Submit</button>
+            </div>
+          </div>
+          {/* Score / Streak */}
+          <div className="text-right">
+            <div className="text-sm">Score</div>
+            <div className="text-xl font-bold">{score}</div>
+            <div className="text-xs opacity-80">Streak: {streak}</div>
+          </div>
+        </div>
+      );
+
+      const GameScreen = () => (
+        <div className="flex items-center justify-center h-full p-4">
+          <div className="w-full max-w-3xl bg-white/10 backdrop-blur rounded-2xl shadow-xl p-4 sm:p-6 relative">
+            <div className="flex items-center justify-between mb-3">
+              <GameHud />
+              <button
+                className="ml-4 bg-white/10 hover:bg-white/20 p-2 rounded-lg"
+                onClick={paused ? resumeGame : pauseGame}
+                aria-label={paused ? "Resume" : "Pause"}
+                title={paused ? "Resume" : "Pause"}
+              >
+                <PauseIcon className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm opacity-90">Question {qIndex + 1} / {questions.length}</div>
+              <div className="text-sm opacity-90">{currentQuestion?.cat}</div>
+            </div>
+
+            <div className="bg-white/10 rounded-xl p-4 mb-4">
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="text-xl sm:text-2xl font-semibold">{currentQuestion?.q || ""}</h2>
+                <button
+                  className="shrink-0 bg-white/10 hover:bg-white/20 p-2 rounded-lg"
+                  onClick={() => currentQuestion && speak(currentQuestion.q, voiceRef)}
+                  aria-label="Read question"
+                  title="Read question"
+                >
+                  <SpeakerIcon className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Answers */}
+            {!mode.expert ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {currentQuestion?.a.map((opt, i) => {
+                  const isCorrect = currentQuestion.correct === i;
+                  const isSelected = selected === i;
+                  let classes = "w-full text-left rounded-xl p-3 bg-white/10 hover:bg-white/20 transition";
+                  if (feedback && isSelected && isCorrect) classes = "w-full text-left rounded-xl p-3 bg-green-500 text-white";
+                  if (feedback && isSelected && !isCorrect) classes = "w-full text-left rounded-xl p-3 bg-red-500 text-white";
+                  if (feedback && !isSelected && isCorrect) classes = "w-full text-left rounded-xl p-3 bg-green-600/80";
+                  return (
+                    <button key={i} className={classes} onClick={() => handleAnswer(i)} disabled={selected !== null}>
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="text"
+                  value={typed}
+                  onChange={e => setTyped(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') submitTypedAnswer(); }}
+                  className="flex-1 rounded-xl p-3 text-slate-900"
+                  placeholder="Type your answer…"
+                  disabled={!!feedback}
+                />
+                <button
+                  onClick={submitTypedAnswer}
+                  disabled={!!feedback}
+                  className="bg-white text-indigo-700 font-bold px-5 py-3 rounded-xl shadow hover:shadow-lg hover:bg-white/90 transition"
+                >
+                  Submit
+                </button>
+              </div>
+            )}
+
+            {/* Pause overlay */}
+            {paused && (
+              <div className="absolute inset-0 flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black/50" />
+                <div className="relative w-full max-w-md bg-white text-slate-900 rounded-2xl shadow-2xl p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <PauseIcon className="w-6 h-6 text-indigo-600" />
+                    <h3 className="text-xl font-bold">Paused</h3>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button onClick={resumeGame} className="flex-1 bg-indigo-600 text-white font-semibold px-4 py-3 rounded-xl hover:bg-indigo-700">Resume</button>
+                    <button onClick={() => { setPaused(false); setScreen("HOME"); }} className="flex-1 bg-slate-200 text-slate-900 font-semibold px-4 py-3 rounded-xl hover:bg-slate-300">Quit</button>
+                  </div>
+                  <p className="text-sm text-slate-600 mt-3">Timer is paused. Speech has been stopped.</p>
+                </div>
               </div>
             )}
           </div>
         </div>
       );
 
-      const ResultsScreen=()=>(
-        <div className="flex items-center justify-center h-full">
-          <div className="bg-white/10 p-6 rounded-xl text-center space-y-4">
-            <h2 className="text-3xl font-bold">Results</h2>
-            <p className="text-5xl font-black">{score}</p>
-            <p>Answered: {answered} | Correct: {correctCount} | Accuracy: {accuracy}%</p>
-            <button onClick={startGame} className="px-6 py-3 bg-white text-indigo-700 rounded">Play Again</button>
-            <button onClick={()=>setScreen("HOME")} className="px-6 py-3 bg-white/20 rounded">Home</button>
+      const ResultsScreen = () => (
+        <div className="flex items-center justify-center h-full p-4">
+          <div className="w-full max-w-2xl bg-white/10 backdrop-blur rounded-2xl shadow-xl p-6">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <TrophyIcon className="w-10 h-10 text-yellow-300" />
+              <h2 className="text-3xl font-extrabold">Results</h2>
+            </div>
+            <div className="text-center mb-6">
+              <div className="text-5xl font-black">{score}</div>
+              <div className="opacity-80">Final Score</div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+              <div className="bg-white/10 rounded-xl p-4 text-center">
+                <div className="text-2xl font-bold">{answered}</div>
+                <div className="text-sm opacity-80">Answered</div>
+              </div>
+              <div className="bg-white/10 rounded-xl p-4 text-center">
+                <div className="text-2xl font-bold">{correctCount}</div>
+                <div className="text-sm opacity-80">Correct</div>
+              </div>
+              <div className="bg-white/10 rounded-xl p-4 text-center">
+                <div className="text-2xl font-bold">{answered ? Math.round((correctCount/answered)*100) : 0}%</div>
+                <div className="text-sm opacity-80">Accuracy</div>
+              </div>
+            </div>
+
+            {canSave ? (
+              <div className="bg-white/10 rounded-xl p-4 mb-4">
+                <div className="mb-2 font-semibold">Save Your Score (Top 10!)</div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={playerName}
+                    onChange={e => setPlayerName(e.target.value)}
+                    className="flex-1 rounded-lg p-3 text-slate-900"
+                    placeholder="Your name"
+                  />
+                  <button onClick={saveScore} className="bg-white text-indigo-700 font-bold px-5 py-3 rounded-xl shadow hover:shadow-lg hover:bg-white/90 transition">Save</button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center mb-4 opacity-80">Not a top-10 score. Try again!</div>
+            )}
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button onClick={startGame} className="bg-white text-indigo-700 font-bold px-6 py-3 rounded-xl shadow hover:shadow-lg hover:bg-white/90 transition">Play Again</button>
+              <button onClick={() => setScreen("HOME")} className="bg-white/10 px-6 py-3 rounded-xl shadow hover:bg-white/20 transition">Back to Home</button>
+              <button onClick={() => setScreen("LEADERBOARD")} className="bg-white/10 px-6 py-3 rounded-xl shadow hover:bg-white/20 transition">View Leaderboard</button>
+            </div>
           </div>
         </div>
       );
 
+      const LeaderboardScreen = () => {
+        const medals = ["🥇","🥈","🥉"];
+        return (
+          <div className="flex items-center justify-center h-full p-4">
+            <div className="w-full max-w-3xl bg-white/10 backdrop-blur rounded-2xl shadow-xl p-6">
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <TrophyIcon className="w-10 h-10 text-yellow-300" />
+                <h2 className="text-3xl font-extrabold">Leaderboard</h2>
+              </div>
+              {leaderboard.length === 0 ? (
+                <div className="text-center opacity-80">No scores yet. Play a game first!</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="text-white/80">
+                      <tr>
+                        <th className="py-2">Rank</th>
+                        <th className="py-2">Name</th>
+                        <th className="py-2">Score</th>
+                        <th className="py-2">Mode</th>
+                        <th className="py-2">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {leaderboard.map((e, i) => {
+                        const dateStr = new Date(e.date).toLocaleString();
+                        const special =
+                          i === 0 ? "bg-yellow-300/20" :
+                          i === 1 ? "bg-gray-300/20" :
+                          i === 2 ? "bg-orange-300/20" : "";
+                        return (
+                          <tr key={i} className={`border-t border-white/10 ${special}`}>
+                            <td className="py-2 font-semibold">{i < 3 ? medals[i] : i + 1}</td>
+                            <td className="py-2">{e.name}</td>
+                            <td className="py-2">{e.score}</td>
+                            <td className="py-2">{e.mode}</td>
+                            <td className="py-2 text-white/80">{dateStr}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <div className="mt-6 flex items-center justify-center">
+                <button onClick={() => setScreen("HOME")} className="bg-white/10 px-6 py-3 rounded-xl shadow hover:bg-white/20 transition">Back to Home</button>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
       return (
         <div className="h-full">
-          {screen==="HOME" && <HomeScreen/>}
-          {screen==="GAME" && <GameScreen/>}
-          {screen==="RESULTS" && <ResultsScreen/>}
+          {screen === "HOME" && <HomeScreen />}
+          {screen === "GAME" && <GameScreen />}
+          {screen === "RESULTS" && <ResultsScreen />}
+          {screen === "LEADERBOARD" && <LeaderboardScreen />}
         </div>
       );
     }
 
-    ReactDOM.createRoot(document.getElementById("root")).render(<TriviaHero/>);
+    ReactDOM.createRoot(document.getElementById("root")).render(<TriviaHero />);
   </script>
 </body>
 </html>
