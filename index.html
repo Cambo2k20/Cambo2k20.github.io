@@ -137,6 +137,8 @@
       const [selected,setSelected]=useState(null);
       const [feedback,setFeedback]=useState(null);
       const [typed,setTyped]=useState("");
+      const [answered,setAnswered]=useState(0);
+      const [correctCount,setCorrectCount]=useState(0);
 
       const voiceRef=useVoices();
       const currentQuestion=questions[qIndex];
@@ -152,46 +154,68 @@
         setStreak(0);
         setSelected(null);
         setFeedback(null);
+        setTyped("");
+        setAnswered(0);
+        setCorrectCount(0);
         setScreen("GAME");
       };
+
+      useEffect(()=>{
+        if(screen==="GAME" && currentQuestion){
+          speak(currentQuestion.q,voiceRef);
+        }
+      },[screen,qIndex]);
+
+      useEffect(()=>{
+        if(screen!=="GAME") return;
+        if(timeLeft<=0){
+          setScreen("RESULTS");
+          return;
+        }
+        const t=setInterval(()=>setTimeLeft(t=>t-1),1000);
+        return()=>clearInterval(t);
+      },[screen,timeLeft]);
 
       const handleAnswer=(i)=>{
         if(selected!==null)return;
         setSelected(i);
+        setAnswered(a=>a+1);
         const isCorrect=i===currentQuestion.correct;
         setFeedback(isCorrect?"correct":"incorrect");
         if(isCorrect){
+          setCorrectCount(c=>c+1);
           const newStreak=streak+1;
           setStreak(newStreak);
           setScore(s=>s+mode.basePoints+50*newStreak);
-        }else{
-          setStreak(0);
-        }
+        }else setStreak(0);
         setTimeout(()=>{setQIndex(qIndex+1);setSelected(null);setFeedback(null);},1500);
       };
 
       const submitTypedAnswer=()=>{
         if(feedback) return;
+        setAnswered(a=>a+1);
         const sim=similarity(typed,currentQuestion.answer);
         const isCorrect=sim>=0.8;
         setFeedback(isCorrect?"correct":"incorrect");
         if(isCorrect){
+          setCorrectCount(c=>c+1);
           const newStreak=streak+1;
           setStreak(newStreak);
           setScore(s=>s+mode.basePoints+50*newStreak);
-        }else{
-          setStreak(0);
-        }
+        }else setStreak(0);
         setTimeout(()=>{setQIndex(qIndex+1);setFeedback(null);setTyped("");},2500);
       };
 
-      const HomeScreen=()=>(
+      const accuracy = answered ? Math.round((correctCount/answered)*100) : 0;
+
+      const HomeScreen=()=>( 
         <div className="flex items-center justify-center h-full">
           <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold">Trivia Hero</h1>
+            <h1 className="text-5xl font-extrabold">Trivia Hero</h1>
+            <p>Select a mode:</p>
             <button onClick={()=>setMode(MODES.CLASSIC)} className="px-4 py-2 bg-white/20 rounded">{MODES.CLASSIC.label}</button>
             <button onClick={()=>setMode(MODES.EXPERT)} className="px-4 py-2 bg-white/20 rounded">{MODES.EXPERT.label}</button>
-            <div><button onClick={startGame} className="px-6 py-3 bg-white text-indigo-700 rounded">Start</button></div>
+            <div><button onClick={startGame} className="px-6 py-3 bg-white text-indigo-700 rounded font-bold">Start Game</button></div>
           </div>
         </div>
       );
@@ -199,13 +223,19 @@
       const GameScreen=()=>(
         <div className="flex items-center justify-center h-full p-4">
           <div className="max-w-2xl w-full bg-white/10 p-6 rounded-xl">
+            <div className="flex justify-between mb-3">
+              <div>Time: {timeLeft}s</div>
+              <div>Score: {score} | Streak: {streak}</div>
+            </div>
             <h2 className="text-xl mb-4">{currentQuestion?.q}</h2>
             {!mode.expert ? (
               <div className="grid grid-cols-2 gap-3">
-                {currentQuestion?.a.map((opt,i)=>(
+                {currentQuestion?.a.map((opt,i)=>( 
                   <button key={i}
                     onClick={()=>handleAnswer(i)}
-                    className="p-3 rounded bg-white/20">{opt}</button>
+                    className={`p-3 rounded ${feedback && i===currentQuestion.correct ? "bg-green-500" : "bg-white/20"}`}>
+                    {opt}
+                  </button>
                 ))}
               </div>
             ):(
@@ -218,10 +248,23 @@
         </div>
       );
 
+      const ResultsScreen=()=>(
+        <div className="flex items-center justify-center h-full">
+          <div className="bg-white/10 p-6 rounded-xl text-center space-y-4">
+            <h2 className="text-3xl font-bold">Results</h2>
+            <p className="text-5xl font-black">{score}</p>
+            <p>Answered: {answered} | Correct: {correctCount} | Accuracy: {accuracy}%</p>
+            <button onClick={startGame} className="px-6 py-3 bg-white text-indigo-700 rounded">Play Again</button>
+            <button onClick={()=>setScreen("HOME")} className="px-6 py-3 bg-white/20 rounded">Home</button>
+          </div>
+        </div>
+      );
+
       return (
         <div className="h-full">
           {screen==="HOME" && <HomeScreen/>}
           {screen==="GAME" && <GameScreen/>}
+          {screen==="RESULTS" && <ResultsScreen/>}
         </div>
       );
     }
